@@ -1,0 +1,2495 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>Amora Global Foods - Keluar Masuk Barang</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%23C9A227'/%3E%3Cstop offset='1' stop-color='%238f7418'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='64' height='64' rx='14' fill='url(%23g)'/%3E%3Ctext x='32' y='43' font-family='Georgia, serif' font-weight='700' font-size='28' text-anchor='middle' fill='%231B232D'%3EAGF%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#12181F;
+    --panel:#1B232D;
+    --panel-2:#212B37;
+    --line:#33404E;
+    --paper:#F1ECE1;
+    --paper-dim:#E4DDCB;
+    --ink:#1B232D;
+    --ink-dim:#5B6472;
+    --text:#E9E6DD;
+    --text-dim:#9AA4B2;
+    --masuk:#3FA796;
+    --masuk-dim:#274B45;
+    --keluar:#E0793C;
+    --keluar-dim:#4A3323;
+    --brass:#C9A227;
+    --radius:10px;
+  }
+  body[data-theme="light"]{
+    --bg:#F5F2EA;
+    --panel:#FFFFFF;
+    --panel-2:#F1EEE4;
+    --line:#DDD6C4;
+    --text:#1F2530;
+    --text-dim:#6B7280;
+    --masuk-dim:#D9F0EA;
+    --keluar-dim:#FCE6D4;
+  }
+  body[data-theme="light"] .msg.err{color:#B5501C;}
+  body[data-theme="light"] .msg.ok{color:#1F7A67;}
+  body[data-theme="light"] .msg.pending{border-color:#C9A227;}
+  body[data-theme="light"] .status-dot{background:#9AA4B2;}
+  .theme-toggle{
+    position:fixed;top:16px;left:16px;z-index:60;
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);
+    width:38px;height:38px;border-radius:8px;font-size:16px;
+    display:inline-flex;align-items:center;justify-content:center;padding:0;
+    box-shadow:0 4px 12px rgba(0,0,0,.2);
+  }
+  .theme-toggle:hover{border-color:var(--brass);color:var(--text);}
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:'IBM Plex Sans', system-ui, sans-serif;
+    min-height:100vh;
+    transition:background-color .2s ease, color .2s ease;
+  }
+  .app{max-width:1080px;margin:0 auto;padding:20px 20px 60px;}
+
+  /* header */
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
+  .brand{display:flex;align-items:center;gap:12px;}
+  .brand-mark{
+    width:40px;height:40px;border-radius:8px;
+    background:linear-gradient(155deg,var(--brass),#8f7418);
+    display:flex;align-items:center;justify-content:center;
+    font-family:'Space Grotesk';font-weight:700;color:#1B232D;font-size:18px;
+  }
+  .brand h1{font-family:'Space Grotesk';font-weight:700;font-size:19px;margin:0;letter-spacing:.2px;}
+  .brand p{margin:1px 0 0;font-size:12px;color:var(--text-dim);}
+  .status-pill{
+    font-family:'IBM Plex Mono';font-size:11.5px;padding:5px 10px;border-radius:20px;
+    display:flex;align-items:center;gap:6px;border:1px solid var(--line);color:var(--text-dim);
+  }
+  .status-dot{width:7px;height:7px;border-radius:50%;background:#6B7684;}
+  .status-pill.on .status-dot{background:var(--masuk);box-shadow:0 0 6px var(--masuk);}
+  .status-pill.on{color:var(--masuk);border-color:var(--masuk-dim);}
+
+  /* nav */
+  .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-bottom:22px;overflow-x:auto;}
+  .tab{
+    font-family:'Space Grotesk';font-weight:600;font-size:13.5px;
+    background:none;border:none;color:var(--text-dim);padding:10px 14px;cursor:pointer;
+    border-bottom:2px solid transparent;white-space:nowrap;
+  }
+  .tab.active{color:var(--text);border-bottom-color:var(--brass);}
+  .tab:hover{color:var(--text);}
+
+  .view{display:none;}
+  .view.active{display:block;animation:fade .2s ease;}
+  @keyframes fade{from{opacity:0;transform:translateY(4px);}to{opacity:1;transform:none;}}
+
+  /* generic panel */
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:18px;}
+  .grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+  .grid-2{display:grid;grid-template-columns:1.1fr .9fr;gap:14px;}
+  @media (max-width:760px){.grid-3{grid-template-columns:1fr;}.grid-2{grid-template-columns:1fr;}}
+
+  /* stat cards */
+  .stat{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:16px;}
+  .stat .label{font-size:11.5px;color:var(--text-dim);text-transform:uppercase;letter-spacing:.06em;}
+  .stat .value{font-family:'Space Grotesk';font-size:28px;font-weight:700;margin-top:6px;}
+  .stat .sub{font-size:12px;color:var(--text-dim);margin-top:4px;}
+  .stat.masuk .value{color:var(--masuk);}
+  .stat.keluar .value{color:var(--keluar);}
+  .stat.exp-expired .value{color:var(--keluar);}
+  .stat.exp-soon .value{color:var(--brass);}
+  .stat.exp-safe .value{color:var(--masuk);}
+
+  h2.section-title{font-family:'Space Grotesk';font-size:15px;margin:0 0 12px;color:var(--text);}
+  .hint{font-size:12px;color:var(--text-dim);margin-top:2px;}
+  .panel-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
+  .io-actions{display:flex;gap:8px;}
+
+  /* stock cards - signature element (kartu stok gudang) */
+  .stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
+  .stock-card{
+    background:var(--paper);color:var(--ink);border-radius:6px;
+    padding:14px 14px 12px;position:relative;overflow:hidden;
+    box-shadow:0 6px 14px rgba(0,0,0,.25);
+  }
+  .stock-card::before{
+    content:"";position:absolute;left:0;top:0;bottom:0;width:6px;
+    background:repeating-linear-gradient(180deg,var(--ink-dim) 0 3px,transparent 3px 8px);
+    opacity:.35;
+  }
+  .stock-card .kode{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-dim);letter-spacing:.04em;}
+  .stock-card .nama{font-family:'Space Grotesk';font-weight:700;font-size:15px;margin:2px 0 8px;}
+  .stock-card .stok-row{display:flex;align-items:baseline;justify-content:space-between;border-top:1px dashed var(--ink-dim);padding-top:8px;}
+  .stock-card .stok-val{font-family:'IBM Plex Mono';font-size:22px;font-weight:600;}
+  .stock-card .stok-unit{font-size:11px;color:var(--ink-dim);}
+  .stock-card .stock-actions{margin-top:10px;display:flex;justify-content:flex-end;gap:6px;}
+  .stamp{
+    position:absolute;right:10px;top:10px;font-family:'Space Grotesk';font-size:9.5px;font-weight:700;
+    padding:3px 6px;border-radius:3px;border:1.5px solid var(--keluar);color:var(--keluar);
+    transform:rotate(6deg);letter-spacing:.05em;
+  }
+  .stamp.ok{border-color:var(--masuk);color:var(--masuk);}
+
+  /* kartu produk kadaluarsa */
+  .exp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px;}
+  .exp-card{
+    background:var(--paper);color:var(--ink);border-radius:6px;
+    padding:14px 14px 12px;position:relative;overflow:hidden;
+    box-shadow:0 6px 14px rgba(0,0,0,.25);
+  }
+  .exp-card .kode{font-family:'IBM Plex Mono';font-size:11px;color:var(--ink-dim);letter-spacing:.04em;}
+  .exp-card .nama{font-family:'Space Grotesk';font-weight:700;font-size:15px;margin:2px 0 8px;}
+  .exp-card .exp-row{display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--ink-dim);padding-top:8px;}
+  .exp-card .exp-tgl{font-family:'IBM Plex Mono';font-size:13px;}
+  .exp-card .exp-tgl.kosong{color:var(--ink-dim);font-style:italic;}
+  .exp-card .exp-actions{margin-top:10px;display:flex;justify-content:flex-end;}
+  .exp-badge{font-family:'Space Grotesk';font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:3px;letter-spacing:.05em;display:inline-block;}
+  .exp-badge.expired{background:var(--keluar-dim);color:var(--keluar);border:1.5px solid var(--keluar);}
+  .exp-badge.soon{background:#463b12;color:var(--brass);border:1.5px solid var(--brass);}
+  .exp-badge.safe{background:var(--masuk-dim);color:var(--masuk);border:1.5px solid var(--masuk);}
+  .exp-badge.none{background:var(--paper-dim);color:var(--ink-dim);border:1.5px solid var(--ink-dim);}
+
+  /* form controls */
+  label{font-size:12.5px;color:var(--text-dim);display:block;margin:10px 0 5px;}
+  label:first-child{margin-top:0;}
+  input[type=text],input[type=number],input[type=date],input[type=password],select,textarea{
+    width:100%;background:var(--panel-2);border:1px solid var(--line);color:var(--text);
+    border-radius:7px;padding:9px 10px;font-family:'IBM Plex Sans';font-size:13.5px;
+  }
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--brass);outline-offset:1px;}
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+  button{font-family:'Space Grotesk';font-weight:600;cursor:pointer;border-radius:7px;border:1px solid transparent;font-size:13.5px;}
+  .btn-primary{background:var(--brass);color:#1B232D;padding:10px 16px;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;border-color:var(--line);color:var(--text);padding:10px 16px;}
+  .btn-ghost:hover{border-color:var(--brass);}
+  .btn-masuk{background:var(--masuk);color:#0E1A17;padding:10px 16px;}
+  .btn-keluar{background:var(--keluar);color:#241207;padding:10px 16px;}
+  .btn-sm{padding:6px 10px;font-size:12px;}
+  button:disabled{opacity:.45;cursor:not-allowed;}
+
+  /* jenis toggle */
+  .jenis-toggle{display:flex;gap:8px;margin:10px 0 4px;}
+  .jenis-btn{flex:1;padding:10px;border-radius:7px;border:1.5px solid var(--line);background:var(--panel-2);color:var(--text-dim);text-align:center;}
+  .jenis-btn.sel-masuk{border-color:var(--masuk);color:var(--masuk);background:var(--masuk-dim);}
+  .jenis-btn.sel-keluar{border-color:var(--keluar);color:var(--keluar);background:var(--keluar-dim);}
+
+  /* table */
+  .table-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:left;color:var(--text-dim);font-weight:500;font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding:8px 8px;border-bottom:1px solid var(--line);}
+  td{padding:9px 8px;border-bottom:1px solid var(--line);}
+  tr:last-child td{border-bottom:none;}
+  .tag{font-family:'IBM Plex Mono';font-size:11px;padding:2px 7px;border-radius:20px;display:inline-block;}
+  .tag.masuk{background:var(--masuk-dim);color:var(--masuk);}
+  .tag.keluar{background:var(--keluar-dim);color:var(--keluar);}
+  .mono{font-family:'IBM Plex Mono';}
+  .empty{color:var(--text-dim);font-size:13px;padding:20px 4px;text-align:center;}
+
+  .banner{
+    background:var(--panel-2);border:1px solid var(--brass);border-left:4px solid var(--brass);
+    border-radius:7px;padding:11px 14px;font-size:12.5px;color:var(--text);margin-bottom:16px;
+    display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap;
+  }
+  .msg{margin-top:10px;font-size:12.5px;padding:9px 11px;border-radius:7px;display:none;}
+  .msg.show{display:block;}
+  .msg.err{background:var(--keluar-dim);color:#ffb385;}
+  .msg.ok{background:var(--masuk-dim);color:#8fe3d3;}
+  .msg.pending{background:var(--panel-2);color:var(--brass);border:1px solid #5c4c19;}
+
+  .field-help{font-size:11px;color:var(--text-dim);margin-top:3px;}
+
+  /* riwayat toolbar */
+  .riwayat-toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:14px;}
+  .riwayat-search{flex:1;min-width:180px;position:relative;}
+  .riwayat-search input{padding-left:30px;}
+  .riwayat-search::before{content:"🔍";position:absolute;left:9px;top:50%;transform:translateY(-50%);font-size:12px;opacity:.7;}
+  .filter-group{display:flex;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:3px;}
+  .filter-btn{padding:6px 12px;border-radius:5px;background:transparent;color:var(--text-dim);font-size:12.5px;border:none;}
+  .filter-btn.active{background:var(--brass);color:#1B232D;}
+  .filter-btn.active.f-masuk{background:var(--masuk);color:#0E1A17;}
+  .filter-btn.active.f-keluar{background:var(--keluar);color:#241207;}
+  .filter-btn.active.f-expired{background:var(--keluar);color:#241207;}
+  .filter-btn.active.f-soon{background:var(--brass);color:#1B232D;}
+  .filter-btn.active.f-safe{background:var(--masuk);color:#0E1A17;}
+  .riwayat-toolbar .io-actions{gap:8px;}
+  .riwayat-count{font-size:11.5px;color:var(--text-dim);margin-bottom:10px;}
+  .date-filter-group{display:flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:5px 8px;}
+  .date-filter-group span{font-size:11px;color:var(--text-dim);white-space:nowrap;}
+  .date-filter-group input[type=date]{padding:5px 7px;font-size:12px;width:132px;}
+  .date-filter-group .icon-btn{width:24px;height:24px;flex-shrink:0;}
+  .date-filter-group.active{border-color:var(--brass);}
+  .settings-group{border-top:1px solid var(--line);padding-top:14px;margin-top:14px;}
+  .settings-group h3{font-family:'Space Grotesk';font-size:13px;margin:0 0 2px;}
+
+  /* modal */
+  .modal-overlay{position:fixed;inset:0;background:rgba(8,11,15,.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
+  .modal-box{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .modal-title{font-family:'Space Grotesk';font-size:15px;margin:0 0 8px;}
+  .modal-text{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 6px;}
+  .modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
+  .modal-actions button{padding:9px 14px;}
+
+  /* action icon buttons in tables */
+  .action-btns{display:flex;gap:6px;white-space:nowrap;}
+  .icon-btn{
+    background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);
+    width:28px;height:28px;border-radius:6px;font-size:13px;padding:0;display:inline-flex;align-items:center;justify-content:center;
+  }
+  .icon-btn:hover{border-color:var(--brass);color:var(--text);}
+  .icon-btn.danger:hover{border-color:var(--keluar);color:var(--keluar);}
+
+  /* toast */
+  .toast-wrap{position:fixed;top:18px;right:18px;z-index:100;display:flex;flex-direction:column;gap:10px;max-width:340px;}
+  .toast{
+    font-family:'IBM Plex Sans';font-size:13px;padding:12px 14px;border-radius:8px;
+    box-shadow:0 10px 24px rgba(0,0,0,.35);display:flex;gap:10px;align-items:flex-start;
+    background:var(--panel);border:1px solid var(--line);border-left:4px solid var(--brass);
+    animation:toastIn .18s ease;
+  }
+  .toast.ok{border-left-color:var(--masuk);}
+  .toast.err{border-left-color:var(--keluar);}
+  .toast .icon{font-size:15px;line-height:1;margin-top:1px;}
+  .toast.ok .icon{color:var(--masuk);}
+  .toast.err .icon{color:var(--keluar);}
+  .toast .body b{display:block;font-family:'Space Grotesk';font-size:13px;margin-bottom:2px;}
+  .toast .body span{color:var(--text-dim);font-size:12px;line-height:1.4;}
+  .toast .close{margin-left:auto;background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:14px;padding:0;}
+  @keyframes toastIn{from{opacity:0;transform:translateX(14px);}to{opacity:1;transform:none;}}
+
+  /* login */
+  .login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px;}
+  .login-card{width:100%;max-width:360px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:26px 24px;}
+  .login-card .brand{justify-content:center;margin-bottom:18px;}
+  .login-card h2{font-family:'Space Grotesk';font-size:16px;text-align:center;margin:0 0 4px;}
+  .login-card p.sub{text-align:center;color:var(--text-dim);font-size:12.5px;margin:0 0 18px;}
+  .login-actions{display:flex;gap:8px;margin-top:16px;}
+  .login-actions button{flex:1;}
+  .login-note{font-size:11.5px;color:var(--text-dim);margin-top:14px;text-align:center;line-height:1.5;}
+  #logoutBtn{margin-left:8px;}
+  .demo-cta{border-top:1px dashed var(--line);border-bottom:1px dashed var(--line);margin-top:16px;padding:14px 0;}
+  .btn-demo{
+    width:100%;background:var(--panel-2);border:1.5px solid var(--brass);color:var(--brass);
+    padding:11px 14px;border-radius:7px;font-family:'Space Grotesk';font-weight:600;font-size:13.5px;
+  }
+  .btn-demo:hover{background:var(--brass);color:#1B232D;}
+  .status-pill.demo{color:var(--brass);border-color:#5c4c19;}
+  .status-pill.demo .status-dot{background:var(--brass);box-shadow:0 0 6px var(--brass);}
+  .banner.demo-banner{border-color:var(--brass);border-left-color:var(--brass);}
+  .field-hidden{display:none;}
+  .back-link{background:none;border:none;color:var(--text-dim);font-size:12px;padding:0;margin-top:10px;text-align:center;width:100%;cursor:pointer;text-decoration:underline;}
+  .back-link:hover{color:var(--text);}
+
+  /* searchable select - pilih barang */
+  .searchable-select{position:relative;}
+  .searchable-select-list{
+    position:absolute;top:calc(100% + 4px);left:0;right:0;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:7px;max-height:220px;overflow-y:auto;
+    z-index:20;display:none;box-shadow:0 10px 24px rgba(0,0,0,.35);
+  }
+  .searchable-select-list.show{display:block;}
+  .searchable-select-item{padding:9px 10px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--line);}
+  .searchable-select-item:last-child{border-bottom:none;}
+  .searchable-select-item:hover,.searchable-select-item.hi{background:var(--panel);}
+  .searchable-select-item .ss-kode{font-family:'IBM Plex Mono';font-size:11px;color:var(--text-dim);}
+  .searchable-select-empty{padding:10px;font-size:12.5px;color:var(--text-dim);}
+
+  /* toggle lihat/sembunyikan kata sandi */
+  .password-wrap{position:relative;}
+  .password-wrap input{padding-right:38px;}
+  .password-toggle{
+    position:absolute;right:4px;top:50%;transform:translateY(-50%);
+    background:none;border:none;color:var(--text-dim);cursor:pointer;
+    font-size:15px;padding:6px;line-height:1;border-radius:6px;
+  }
+  .password-toggle:hover{color:var(--text);}
+
+  /* hilangkan warna putih bawaan browser (autofill) di semua input, termasuk email & kata sandi */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active{
+    -webkit-text-fill-color:var(--text) !important;
+    caret-color:var(--text);
+    box-shadow:0 0 0 1000px var(--panel-2) inset !important;
+    -webkit-box-shadow:0 0 0 1000px var(--panel-2) inset !important;
+    transition:background-color 9999s ease-in-out 0s;
+  }
+</style>
+</head>
+<body>
+
+<button id="themeToggleBtn" class="theme-toggle" onclick="toggleTheme()" title="Ganti mode gelap/terang">🌙</button>
+
+<div class="toast-wrap" id="toastWrap"></div>
+
+<div id="loginScreen" class="login-wrap">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">AGF</div>
+      <div>
+        <h1 style="font-size:17px;">Amora Global Foods</h1>
+      </div>
+    </div>
+    <h2 id="loginHeading">Masuk ke aplikasi</h2>
+    <p class="sub" id="loginSub">Gunakan email &amp; kata sandi tim Anda</p>
+    <div id="nameField" class="field-hidden">
+      <label>Nama lengkap</label>
+      <input type="text" id="loginName" placeholder="mis. Budi Santoso">
+    </div>
+    <label>Email</label>
+    <input type="text" id="loginEmail" placeholder="nama@perusahaan.com">
+    <label>Kata sandi</label>
+    <div class="password-wrap">
+      <input type="password" id="loginPassword" placeholder="minimal 6 karakter">
+      <button type="button" class="password-toggle" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Lihat atau sembunyikan kata sandi">👁</button>
+    </div>
+    <div class="login-actions" id="loginActionsDefault">
+      <button class="btn-ghost" onclick="showRegisterForm()">Daftar</button>
+      <button class="btn-primary" onclick="doLogin()">Masuk</button>
+    </div>
+    <div class="login-actions field-hidden" id="loginActionsRegister">
+      <button class="btn-ghost" onclick="showLoginForm()">Batal</button>
+      <button class="btn-primary" onclick="doRegister()">Buat Akun</button>
+    </div>
+    <div id="msgLogin" class="msg"></div>
+    <div class="demo-cta" id="demoCtaBlock">
+      <button class="btn-demo" onclick="startDemo()">▶ Coba Mode Demo (data contoh)</button>
+      <p class="login-note" style="margin-top:8px;">Langsung eksplor aplikasi dengan data contoh, tanpa perlu akun atau setup apa pun.</p>
+    </div>
+    <p class="login-note" id="loginNote">Login memerlukan Firebase yang sudah terhubung. Belum ada konfigurasi Firebase - <a href="#" onclick="skipLoginLocal();return false;" style="color:var(--brass);">lanjut pakai mode lokal tanpa login</a>.</p>
+  </div>
+</div>
+
+<div id="pendingScreen" class="login-wrap" style="display:none;">
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-mark">AGF</div>
+      <div>
+        <h1 style="font-size:17px;">Amora Global Foods</h1>
+      </div>
+    </div>
+    <h2>Menunggu aktivasi</h2>
+    <p class="sub">Akun Anda sudah terdaftar tapi belum diaktifkan oleh admin. Hubungi admin gudang Anda untuk mengaktifkan akun ini sebelum bisa melihat atau mengisi data.</p>
+    <div class="login-actions">
+      <button class="btn-ghost" style="flex:1;" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+</div>
+
+<div class="app" id="appRoot" style="display:none;">
+
+
+  <div class="topbar">
+    <div class="brand">
+      <div class="brand-mark">AGF</div>
+      <div>
+        <h1>Gudang Ledger</h1>
+        <p>Pencatatan barang keluar &amp; masuk</p>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;">
+      <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">Mode lokal</span></div>
+      <button id="logoutBtn" class="btn-ghost btn-sm" style="display:none;" onclick="doLogout()">Keluar</button>
+    </div>
+  </div>
+
+  <div id="banner" class="banner" style="display:none;">
+    <span>Belum terhubung ke Firebase - data disimpan sementara di perangkat ini saja.</span>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" data-tab="dashboard">Dashboard</button>
+    <button class="tab" data-tab="barang">Barang</button>
+    <button class="tab" data-tab="transaksi">Catat Transaksi</button>
+    <button class="tab" data-tab="riwayat">Riwayat</button>
+    <button class="tab" data-tab="exp">Exp. Produk</button>
+    <button class="tab" data-tab="rusak">Barang Rusak</button>
+    <button class="tab" data-tab="kelola-user" id="tabKelolaUser" style="display:none;">Kelola User</button>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat"><div class="label">Total Jenis Barang</div><div class="value" id="statTotalBarang">0</div><div class="sub">SKU terdaftar</div></div>
+      <div class="stat masuk"><div class="label">Masuk Hari Ini</div><div class="value" id="statMasukHariIni">0</div><div class="sub">unit</div></div>
+      <div class="stat keluar"><div class="label">Keluar Hari Ini</div><div class="value" id="statKeluarHariIni">0</div><div class="sub">unit</div></div>
+    </div>
+    <div class="panel">
+      <h2 class="section-title">Transaksi terbaru</h2>
+      <div id="dashRiwayat"></div>
+    </div>
+  </div>
+
+  <!-- BARANG -->
+  <div class="view" id="view-barang">
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head-row">
+          <h2 class="section-title" style="margin:0;">Kartu stok</h2>
+          <div class="io-actions">
+            <input type="file" id="importFile" accept=".csv" style="display:none;" onchange="handleImportFile(event)">
+            <button class="btn-ghost btn-sm" onclick="$('importFile').click()">⬆ Impor CSV</button>
+            <button class="btn-ghost btn-sm" onclick="eksporBarangCSV()">⬇ Ekspor CSV</button>
+          </div>
+        </div>
+        <p class="field-help" style="margin-bottom:12px;">Format CSV: kolom <span class="mono">kode, nama, satuan, stok, tglExp</span> - baris pertama header. Kolom <span class="mono">tglExp</span> opsional (format YYYY-MM-DD). Kode yang sudah ada akan diperbarui, kode baru akan ditambahkan.</p>
+        <div id="msgImpor" class="msg"></div>
+        <div class="riwayat-search" style="margin-bottom:12px;">
+          <input type="text" id="stokSearch" placeholder="Cari kode atau nama barang..." oninput="onStokSearch(event)">
+        </div>
+        <div class="riwayat-count" id="stokCount"></div>
+        <div class="stock-grid" id="stockGrid"></div>
+      </div>
+      <div class="panel">
+        <h2 class="section-title">Tambah barang baru</h2>
+        <label>Kode barang</label>
+        <input type="text" id="fKode" placeholder="mis. BRG-001">
+        <label>Nama barang</label>
+        <input type="text" id="fNama" placeholder="mis. Kabel HDMI 2m">
+        <div class="row">
+          <div>
+            <label>Satuan</label>
+            <input type="text" id="fSatuan" placeholder="pcs / dus / kg">
+          </div>
+          <div>
+            <label>Stok awal</label>
+            <input type="number" id="fStokAwal" value="0" min="0">
+          </div>
+        </div>
+        <label>Tanggal Kadaluarsa (opsional)</label>
+        <input type="date" id="fTglExp">
+        <div style="margin-top:14px;">
+          <button class="btn-primary" onclick="tambahBarang()">Simpan barang</button>
+        </div>
+        <div id="msgBarang" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TRANSAKSI -->
+  <div class="view" id="view-transaksi">
+    <div class="panel" style="max-width:480px;">
+      <h2 class="section-title">Catat transaksi</h2>
+      <div class="jenis-toggle">
+        <div class="jenis-btn sel-masuk" id="jenisMasukBtn" onclick="pilihJenis('masuk')">↓ Barang Masuk</div>
+        <div class="jenis-btn" id="jenisKeluarBtn" onclick="pilihJenis('keluar')">↑ Barang Keluar</div>
+      </div>
+      <label>Pilih barang</label>
+      <div class="searchable-select" id="barangSearchWrap">
+        <input type="text" id="fBarangSearch" placeholder="Ketik kode atau nama barang..." autocomplete="off" oninput="onBarangSearchInput(event)" onfocus="onBarangSearchFocus()" onkeydown="onBarangSearchKeydown(event)">
+        <input type="hidden" id="fBarangSelect">
+        <div class="searchable-select-list" id="barangSearchList"></div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Jumlah</label>
+          <input type="number" id="fJumlah" min="1" value="0">
+        </div>
+        <div>
+          <label>Tanggal</label>
+          <input type="date" id="fTanggal">
+        </div>
+      </div>
+      <label>Keterangan (opsional)</label>
+      <textarea id="fKeterangan" rows="2" placeholder="mis. dari supplier A / untuk pesanan #123"></textarea>
+      <div style="margin-top:14px;">
+        <button id="btnSimpanTransaksi" class="btn-masuk" onclick="simpanTransaksi()">Simpan transaksi</button>
+      </div>
+      <div id="msgTransaksi" class="msg"></div>
+    </div>
+  </div>
+
+  <!-- RIWAYAT -->
+  <div class="view" id="view-riwayat">
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Riwayat transaksi</h2>
+        <div class="io-actions">
+          <input type="file" id="importRiwayatFile" accept=".csv" style="display:none;" onchange="handleImportRiwayatFile(event)">
+          <button class="btn-ghost btn-sm" onclick="$('importRiwayatFile').click()">⬆ Impor CSV</button>
+          <button class="btn-ghost btn-sm" onclick="eksporRiwayatCSV()">⬇ Ekspor CSV</button>
+        </div>
+      </div>
+      <p class="field-help" style="margin-bottom:12px;">Format impor CSV: kolom <span class="mono">tanggal, jenis, kode, jumlah, keterangan</span> - baris pertama header. Kolom <span class="mono">jenis</span> diisi <span class="mono">masuk</span> atau <span class="mono">keluar</span>, kolom <span class="mono">kode</span> harus sudah terdaftar di Barang.</p>
+      <div id="msgRiwayat" class="msg"></div>
+
+      <div class="riwayat-toolbar">
+        <div class="riwayat-search">
+          <input type="text" id="riwayatSearch" placeholder="Cari nama, kode, atau keterangan..." oninput="onRiwayatSearch(event)">
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" id="filterSemuaBtn" onclick="setRiwayatFilter('semua')">Semua</button>
+          <button class="filter-btn f-masuk" id="filterMasukBtn" onclick="setRiwayatFilter('masuk')">↓ Masuk</button>
+          <button class="filter-btn f-keluar" id="filterKeluarBtn" onclick="setRiwayatFilter('keluar')">↑ Keluar</button>
+        </div>
+        <div class="date-filter-group" id="dateFilterGroup">
+          <span>📅 Dari</span>
+          <input type="date" id="riwayatDariTanggal" onchange="onRiwayatDateChange()">
+          <span>s/d</span>
+          <input type="date" id="riwayatSampaiTanggal" onchange="onRiwayatDateChange()">
+          <button class="icon-btn" title="Hapus filter tanggal" onclick="resetRiwayatDate()">✕</button>
+        </div>
+      </div>
+      <div class="riwayat-count" id="riwayatCount"></div>
+      <div id="riwayatTable"></div>
+    </div>
+  </div>
+
+  <!-- EXP PRODUK -->
+  <div class="view" id="view-exp">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat exp-expired"><div class="label">Sudah Kadaluarsa</div><div class="value" id="statExpExpired">0</div><div class="sub">SKU</div></div>
+      <div class="stat exp-soon"><div class="label">Segera Kadaluarsa</div><div class="value" id="statExpSoon">0</div><div class="sub">&le; 30 hari lagi</div></div>
+      <div class="stat exp-safe"><div class="label">Masih Aman</div><div class="value" id="statExpSafe">0</div><div class="sub">SKU dengan tanggal exp</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Kadaluarsa produk</h2>
+      </div>
+      <p class="field-help" style="margin-bottom:12px;">Atur tanggal kadaluarsa tiap barang lewat tombol ✎ di kartu. Barang tanpa tanggal exp ditandai "Belum Diatur".</p>
+
+      <div class="riwayat-toolbar">
+        <div class="riwayat-search">
+          <input type="text" id="expSearch" placeholder="Cari kode atau nama barang..." oninput="onExpSearch(event)">
+        </div>
+        <div class="filter-group">
+          <button class="filter-btn active" id="expFilterSemuaBtn" onclick="setExpFilter('semua')">Semua</button>
+          <button class="filter-btn f-expired" id="expFilterExpiredBtn" onclick="setExpFilter('expired')">Kadaluarsa</button>
+          <button class="filter-btn f-soon" id="expFilterSoonBtn" onclick="setExpFilter('soon')">Segera</button>
+          <button class="filter-btn f-safe" id="expFilterSafeBtn" onclick="setExpFilter('safe')">Aman</button>
+          <button class="filter-btn" id="expFilterNoneBtn" onclick="setExpFilter('none')">Belum Diatur</button>
+        </div>
+      </div>
+      <div class="riwayat-count" id="expCount"></div>
+      <div class="exp-grid" id="expGrid"></div>
+    </div>
+  </div>
+
+  <!-- BARANG RUSAK -->
+  <div class="view" id="view-rusak">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat keluar"><div class="label">Kejadian Tercatat</div><div class="value" id="statRusakKejadian">0</div><div class="sub">catatan kerusakan</div></div>
+      <div class="stat keluar"><div class="label">Rusak Bulan Ini</div><div class="value" id="statRusakBulanIni">0</div><div class="sub">unit</div></div>
+      <div class="stat keluar"><div class="label">Total Unit Rusak</div><div class="value" id="statRusakTotal">0</div><div class="sub">unit sepanjang waktu</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="panel">
+        <div class="panel-head-row">
+          <h2 class="section-title" style="margin:0;">Riwayat barang rusak</h2>
+          <div class="io-actions">
+            <button class="btn-ghost btn-sm" onclick="eksporRusakCSV()">⬇ Ekspor CSV</button>
+          </div>
+        </div>
+        <div class="riwayat-toolbar">
+          <div class="riwayat-search">
+            <input type="text" id="rusakSearch" placeholder="Cari kode, nama, atau keterangan..." oninput="onRusakSearch(event)">
+          </div>
+        </div>
+        <div class="riwayat-count" id="rusakCount"></div>
+        <div id="rusakTable"></div>
+      </div>
+      <div class="panel">
+        <h2 class="section-title">Catat barang rusak</h2>
+        <label>Pilih barang</label>
+        <div class="searchable-select" id="rusakBarangSearchWrap">
+          <input type="text" id="fRusakBarangSearch" placeholder="Ketik kode atau nama barang..." autocomplete="off" oninput="onRusakBarangSearchInput(event)" onfocus="onRusakBarangSearchFocus()" onkeydown="onRusakBarangSearchKeydown(event)">
+          <input type="hidden" id="fRusakBarangSelect">
+          <div class="searchable-select-list" id="rusakBarangSearchList"></div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Jumlah rusak</label>
+            <input type="number" id="fRusakJumlah" min="1" value="1">
+          </div>
+          <div>
+            <label>Tanggal</label>
+            <input type="date" id="fRusakTanggal">
+          </div>
+        </div>
+        <label>Keterangan / alasan rusak (opsional)</label>
+        <textarea id="fRusakKeterangan" rows="2" placeholder="mis. kemasan penyok, basah kena air, jatuh saat bongkar"></textarea>
+        <div style="margin-top:14px;">
+          <button class="btn-keluar" onclick="simpanRusak()">Simpan barang rusak</button>
+        </div>
+        <div id="msgRusak" class="msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- KELOLA USER -->
+  <div class="view" id="view-kelola-user">
+    <div class="panel" style="max-width:640px;">
+      <h2 class="section-title">Kelola pengguna</h2>
+      <p class="hint">Hanya admin yang bisa melihat halaman ini. Daftar di bawah hanya menampilkan pengguna yang sudah pernah login/daftar ke aplikasi setidaknya sekali - pengguna pertama yang mendaftar otomatis menjadi admin dan aktif. Pengguna baru lainnya otomatis <strong>Belum Aktif</strong> dan tidak bisa melihat atau mengisi data sampai diaktifkan lewat tombol Aktifkan di bawah.</p>
+      <div id="msgUsers" class="msg"></div>
+      <div id="usersTable" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+
+</div>
+
+<div id="modalOverlay" class="modal-overlay" style="display:none;">
+  <div class="modal-box" id="modalBox"></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-app-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-auth-compat.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/10.12.2/firebase-firestore-compat.min.js"></script>
+<script>
+
+// Isi objek ini dengan konfigurasi Firebase (dari menu Pengaturan setelah berhasil
+// terhubung) supaya SETIAP orang yang membuka link aplikasi ini langsung diarahkan
+// ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
+// Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
+const FIREBASE_CONFIG_BAWAAN = {
+  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+  authDomain: "amoragudangv1.firebaseapp.com",
+  projectId: "amoragudangv1",
+  appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
+};
+
+// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec) supaya SEMUA orang
+// yang membuka link aplikasi ini otomatis terhubung ke Google Sheets tanpa perlu
+// mengisi sendiri di menu Pengaturan. Kosongkan ("") jika belum ingin mengunci ke file.
+const GOOGLE_SHEETS_URL_BAWAAN = "https://script.google.com/macros/s/AKfycbxetVIwHCw-dI7mZ4A9ktb4bBXv3XV9P1wtJKT-JTSBZ0R-CV-eZecjJx6sRMSLmnBT/exec";
+
+let db = null, auth = null, fbReady = false;
+let barangList = [];      // {id, kode, nama, satuan, stok, tglExp}
+let transaksiList = [];   // {id, kodeBarang, namaBarang, jenis, jumlah, stokSetelah, keterangan, tanggal}
+let rusakList = [];       // {id, kodeBarang, namaBarang, jumlah, keterangan, tanggal}
+let usersList = [];       // {id(uid), email, role, createdAt}
+let currentUserRole = null; // 'admin' | 'user' | null (belum diketahui / mode lokal)
+let currentUserAktif = null; // true/false/null - null berarti belum diketahui
+let userRoleUnsub = null;
+let barangUnsub = null;
+let transaksiUnsub = null;
+let rusakUnsub = null;
+let usersUnsub = null;
+let jenisAktif = 'masuk';
+let sheetsUrl = '';
+let isDemo = false;
+let modalJenisAktif = 'masuk';
+let riwayatFilter = 'semua'; // 'semua' | 'masuk' | 'keluar'
+let riwayatQuery = '';
+let riwayatDari = '';
+let riwayatSampai = '';
+let stokQuery = '';
+let expFilter = 'semua'; // 'semua' | 'expired' | 'soon' | 'safe' | 'none'
+let expQuery = '';
+let rusakQuery = '';
+let rusakBarangSearchHighlight = -1;
+let sedangProsesDaftar = false; // true selama proses Buat Akun, supaya tidak auto-masuk ke aplikasi
+
+const $ = (id) => document.getElementById(id);
+
+// Beberapa lingkungan (mis. pratinjau artifact di Claude) menyediakan window.storage bawaan.
+// Di hosting sungguhan (Netlify, Blogger, dsb) API itu tidak ada, jadi di sini kita pakai
+// localStorage browser biasa sebagai pengganti supaya aplikasi tetap jalan di mana saja.
+const localStore = (window.storage && typeof window.storage.get === 'function') ? window.storage : {
+  async get(key){
+    const v = localStorage.getItem(key);
+    return v === null ? null : { key, value: v };
+  },
+  async set(key, value){
+    localStorage.setItem(key, String(value));
+    return { key, value };
+  }
+};
+
+function todayStr(){
+  const d = new Date();
+  return d.toISOString().slice(0,10);
+}
+$('fTanggal') && ($('fTanggal').value = todayStr());
+$('fRusakTanggal') && ($('fRusakTanggal').value = todayStr());
+
+// ---------- MODE GELAP / TERANG ----------
+function terapkanTema(tema){
+  document.body.setAttribute('data-theme', tema);
+  const btn = $('themeToggleBtn');
+  if(btn) btn.textContent = tema === 'light' ? '🌞' : '🌙';
+}
+window.toggleTheme = async function(){
+  const temaSekarang = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+  const temaBaru = temaSekarang === 'light' ? 'dark' : 'light';
+  terapkanTema(temaBaru);
+  try{ await localStore.set('inv:theme', temaBaru, false); }catch(e){}
+};
+(async function initTema(){
+  let tema = 'dark';
+  try{ const r = await localStore.get('inv:theme'); tema = (r && r.value) || 'dark'; }catch(e){}
+  terapkanTema(tema);
+})();
+
+// ---------- TOAST NOTIFICATION ----------
+function showToast(kind, title, text, durationMs){
+  const wrap = $('toastWrap');
+  const el = document.createElement('div');
+  el.className = 'toast ' + (kind === 'ok' ? 'ok' : 'err');
+  el.innerHTML = `
+    <span class="icon">${kind === 'ok' ? '✓' : '✕'}</span>
+    <div class="body"><b>${escapeHtml(title)}</b>${text ? `<span>${escapeHtml(text)}</span>` : ''}</div>
+    <button class="close" aria-label="Tutup">✕</button>
+  `;
+  el.querySelector('.close').onclick = () => el.remove();
+  wrap.appendChild(el);
+  setTimeout(() => { el.remove(); }, durationMs || 5000);
+}
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab').forEach(btn=>{
+  btn.addEventListener('click', ()=> goTo(btn.dataset.tab));
+});
+window.goTo = function(tab){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+tab));
+};
+
+window.pilihJenis = function(j){
+  jenisAktif = j;
+  $('jenisMasukBtn').classList.toggle('sel-masuk', j==='masuk');
+  $('jenisKeluarBtn').classList.toggle('sel-keluar', j==='keluar');
+  const btn = $('btnSimpanTransaksi');
+  btn.className = j==='masuk' ? 'btn-masuk' : 'btn-keluar';
+  btn.textContent = j==='masuk' ? 'Simpan barang masuk' : 'Simpan barang keluar';
+};
+pilihJenis('masuk');
+
+function showMsg(id, text, ok){
+  const el = $(id);
+  el.textContent = text;
+  el.className = 'msg show ' + (ok ? 'ok' : 'err');
+  setTimeout(()=>{ el.className='msg'; }, 4000);
+}
+
+function showMsgPending(id, text){
+  const el = $(id);
+  el.textContent = text;
+  el.className = 'msg show pending';
+}
+
+window.togglePasswordVisibility = function(){
+  const inp = $('loginPassword');
+  const btn = $('togglePasswordBtn');
+  if(inp.type === 'password'){
+    inp.type = 'text';
+    btn.textContent = '🙈';
+  }else{
+    inp.type = 'password';
+    btn.textContent = '👁';
+  }
+};
+
+// ---------- FORM DAFTAR / MASUK ----------
+window.showRegisterForm = function(){
+  $('nameField').classList.remove('field-hidden');
+  $('loginActionsDefault').classList.add('field-hidden');
+  $('loginActionsRegister').classList.remove('field-hidden');
+  $('loginHeading').textContent = 'Buat akun baru';
+  $('loginSub').textContent = 'Isi nama, email, dan kata sandi Anda';
+  $('loginName').focus();
+};
+
+window.showLoginForm = function(){
+  $('nameField').classList.add('field-hidden');
+  $('loginActionsRegister').classList.add('field-hidden');
+  $('loginActionsDefault').classList.remove('field-hidden');
+  $('loginHeading').textContent = 'Masuk ke aplikasi';
+  $('loginSub').textContent = 'Gunakan email & kata sandi tim Anda';
+  $('loginName').value = '';
+  $('msgLogin').className = 'msg';
+};
+
+// ---------- LOCAL STORAGE FALLBACK ----------
+// Data demo dan data lokal sungguhan disimpan di kunci terpisah supaya mencoba
+// Mode Demo tidak pernah menimpa data asli, dan status demo/lokal ikut disimpan
+// (kunci 'inv:mode') supaya tidak hilang saat halaman dimuat ulang.
+async function bacaModeTersimpan(){
+  try{ const r = await localStore.get('inv:mode'); return (r && r.value) || 'local'; }catch(e){ return 'local'; }
+}
+async function simpanModeTersimpan(mode){
+  try{ await localStore.set('inv:mode', mode, false); }catch(e){}
+}
+async function loadLocal(){
+  isDemo = (await bacaModeTersimpan()) === 'demo';
+  const kunciBarang = isDemo ? 'inv:demo-barang' : 'inv:barang';
+  const kunciTransaksi = isDemo ? 'inv:demo-transaksi' : 'inv:transaksi';
+  const kunciRusak = isDemo ? 'inv:demo-rusak' : 'inv:rusak';
+  try{ const r = await localStore.get(kunciBarang); barangList = r ? JSON.parse(r.value) : []; }catch(e){ barangList = []; }
+  try{ const r = await localStore.get(kunciTransaksi); transaksiList = r ? JSON.parse(r.value) : []; }catch(e){ transaksiList = []; }
+  try{ const r = await localStore.get(kunciRusak); rusakList = r ? JSON.parse(r.value) : []; }catch(e){ rusakList = []; }
+  setStatus(false);
+  renderAll();
+}
+async function saveLocalBarang(){
+  const kunci = isDemo ? 'inv:demo-barang' : 'inv:barang';
+  await localStore.set(kunci, JSON.stringify(barangList), false);
+}
+async function saveLocalTransaksi(){
+  const kunci = isDemo ? 'inv:demo-transaksi' : 'inv:transaksi';
+  await localStore.set(kunci, JSON.stringify(transaksiList), false);
+}
+async function saveLocalRusak(){
+  const kunci = isDemo ? 'inv:demo-rusak' : 'inv:rusak';
+  await localStore.set(kunci, JSON.stringify(rusakList), false);
+}
+
+// ---------- FIREBASE ----------
+let fbApp = null;
+
+function terjemahkanErrorFirebase(e){
+  const code = (e && e.code) || '';
+  const rawMsg = ((e && e.message) || '').toLowerCase();
+  let pesan;
+  if(code.includes('invalid-api-key') || rawMsg.includes('api key') || rawMsg.includes('api-key-not-valid')){
+    pesan = 'API Key tidak valid. Periksa kembali di Firebase Console.';
+  }else if(code.includes('project-not-found') || (rawMsg.includes('project') && rawMsg.includes('not found'))){
+    pesan = 'Project ID tidak ditemukan. Periksa ejaan Project ID.';
+  }else if(code.includes('unavailable') || rawMsg.includes('network') || rawMsg.includes('failed to fetch')){
+    pesan = 'Tidak bisa menjangkau server Firebase - periksa koneksi internet Anda.';
+  }else if(code.includes('invalid-argument') || code.includes('failed-precondition') || code.includes('not-found')){
+    pesan = 'Gagal terhubung ke Firestore. Penyebab paling umum: database Firestore di project ini belum dibuat. Buka Firebase Console -> pilih project -> menu Firestore Database -> klik "Create database". Jika sudah dibuat, periksa lagi ejaan Auth Domain dan Project ID.';
+  }else if(code.includes('app/duplicate-app')){
+    pesan = 'Terjadi konflik inisialisasi, coba lagi.';
+  }else{
+    pesan = e && e.message ? ('Gagal terhubung: ' + e.message) : 'Gagal terhubung ke Firebase. Periksa kembali konfigurasi Anda.';
+  }
+  return code ? `${pesan} (kode: ${code})` : pesan;
+}
+
+// Melepas semua listener/koneksi Firebase yang sedang aktif (kalau ada) supaya
+// aman untuk berpindah ke konfigurasi/project Firebase yang baru tanpa bentrok.
+async function bersihkanFirebaseAktif(){
+  if(userRoleUnsub){ userRoleUnsub(); userRoleUnsub = null; }
+  if(barangUnsub){ barangUnsub(); barangUnsub = null; }
+  if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
+  if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+  if(usersUnsub){ usersUnsub(); usersUnsub = null; }
+  if(typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length){
+    await Promise.all(firebase.apps.map(a => a.delete().catch(()=>{})));
+  }
+  fbApp = null; auth = null; db = null;
+}
+
+async function initFirebase(cfg){
+  try{
+    // Selalu bersihkan instance/app Firebase yang mungkin sudah aktif sebelumnya
+    // (mis. dari FIREBASE_CONFIG_BAWAAN saat boot, atau percobaan sebelumnya).
+    // Tanpa ini, initializeApp() kedua akan gagal dengan error "app/duplicate-app"
+    // setiap kali admin mengganti/mengisi API Key baru lewat menu Pengaturan.
+    await bersihkanFirebaseAktif();
+
+    fbApp = firebase.initializeApp(cfg);
+    db = firebase.firestore();
+    // Sandbox/iframe (seperti lingkungan artifact) sering memblokir koneksi streaming
+    // WebChannel jangka panjang milik Firestore. Paksa pakai long-polling biasa (HTTP)
+    // supaya listener realtime tetap bisa menjangkau server.
+    db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
+    auth = firebase.auth();
+
+    $('loginNote').style.display = 'none';
+    $('demoCtaBlock').style.display = 'none';
+
+    auth.onAuthStateChanged(async (user)=>{
+      if(user && sedangProsesDaftar){
+        return; // akun baru saja dibuat - biarkan doRegister() yang mengurus (sign out lalu tampilkan form login)
+      }
+      if(user){
+        fbReady = true;
+        isDemo = false;
+        setStatus(true);
+        try{
+          await ensureUserDoc(user);
+          attachUserStatusListener(user.uid);
+        }catch(e){
+          // Jika aturan keamanan Firestore belum diatur, anggap user biasa & aktif
+          currentUserRole = 'user';
+          currentUserAktif = true;
+          showApp();
+          attachFirestoreListeners();
+          applyRoleUI();
+        }
+      }else{
+        fbReady = false;
+        currentUserRole = null;
+        currentUserAktif = null;
+        if(userRoleUnsub){ userRoleUnsub(); userRoleUnsub = null; }
+        if(barangUnsub){ barangUnsub(); barangUnsub = null; }
+        if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
+        if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+        if(usersUnsub){ usersUnsub(); usersUnsub = null; }
+        barangList = [];
+        transaksiList = [];
+        rusakList = [];
+        usersList = [];
+        setStatus(false);
+        showLogin();
+      }
+    });
+  }catch(e){
+    fbReady = false;
+    setStatus(false);
+    showToast('err', 'Gagal terhubung', terjemahkanErrorFirebase(e));
+  }
+}
+
+function attachFirestoreListeners(){
+  if(barangUnsub){ barangUnsub(); barangUnsub = null; }
+  if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
+  if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+  if(usersUnsub){ usersUnsub(); usersUnsub = null; }
+
+  barangUnsub = db.collection('barang').onSnapshot((snap)=>{
+    barangList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderAll();
+  }, (err)=>{ showToast('err', 'Gagal membaca data', err.message); });
+
+  transaksiUnsub = db.collection('transaksi').orderBy('createdAt','desc').limit(200).onSnapshot((snap)=>{
+    transaksiList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderAll();
+  });
+
+  rusakUnsub = db.collection('kerusakan').orderBy('createdAt','desc').limit(200).onSnapshot((snap)=>{
+    rusakList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderBarangRusak();
+  });
+
+  usersUnsub = db.collection('users').orderBy('createdAt','desc').onSnapshot((snap)=>{
+    usersList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderKelolaUser();
+  }, ()=>{ /* non-admin mungkin tidak diizinkan membaca daftar user - diamkan saja */ });
+}
+
+// Membuat dokumen profil user (nama, role, aktif) saat pertama kali login/daftar.
+// Pengguna PERTAMA yang pernah terdaftar di koleksi 'users' otomatis jadi admin & aktif.
+// Pengguna berikutnya dibuat nonaktif dulu - harus diaktifkan admin lewat menu Kelola User.
+async function ensureUserDoc(user, namaDaftar){
+  const ref = db.collection('users').doc(user.uid);
+  const snap = await ref.get();
+  if(!snap.exists){
+    const existing = await db.collection('users').limit(1).get();
+    const isPertama = existing.empty;
+    const role = isPertama ? 'admin' : 'user';
+    await ref.set({ nama: namaDaftar || '', email: user.email, role, aktif: isPertama, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+  }else if(namaDaftar && !snap.data().nama){
+    await ref.update({ nama: namaDaftar });
+  }
+}
+
+function attachUserStatusListener(uid){
+  if(userRoleUnsub){ userRoleUnsub(); userRoleUnsub = null; }
+  userRoleUnsub = db.collection('users').doc(uid).onSnapshot((doc)=>{
+    const data = doc.exists ? doc.data() : {};
+    currentUserRole = data.role || 'user';
+    currentUserAktif = data.aktif !== false; // dokumen lama tanpa field 'aktif' dianggap aktif (kompatibel ke belakang)
+    setStatus(true);
+    if(currentUserAktif){
+      showApp();
+      if(!barangUnsub){ attachFirestoreListeners(); } // hindari pasang listener dobel kalau sudah aktif sebelumnya
+    }else{
+      showPending();
+    }
+    applyRoleUI();
+  }, ()=>{ currentUserRole = 'user'; currentUserAktif = true; showApp(); applyRoleUI(); });
+}
+
+// Menampilkan/menyembunyikan tab Pengaturan & Kelola User sesuai role, dan
+// menendang keluar dari tab tsb kalau ternyata sedang aktif tapi tidak diizinkan.
+function applyRoleUI(){
+  const isAdmin = fbReady && currentUserRole === 'admin';
+  const bolehKelolaUser = fbReady && isAdmin;
+
+  const tabUser = $('tabKelolaUser');
+  if(tabUser) tabUser.style.display = bolehKelolaUser ? '' : 'none';
+
+  const activeTab = document.querySelector('.tab.active');
+  if(activeTab){
+    if(activeTab.dataset.tab==='kelola-user' && !bolehKelolaUser) goTo('dashboard');
+  }
+}
+
+function setStatus(on){
+  const pill = $('statusPill');
+  pill.classList.toggle('on', on);
+  pill.classList.toggle('demo', isDemo);
+  let teksStatus = isDemo ? 'Mode Demo' : (on ? 'Firebase terhubung' : 'Mode lokal');
+  if(on && !isDemo && currentUserRole){ teksStatus += currentUserRole==='admin' ? ' - Admin' : ' - User'; }
+  $('statusText').textContent = teksStatus;
+  const banner = $('banner');
+  if(isDemo){
+    banner.style.display = 'flex';
+    banner.classList.add('demo-banner');
+    banner.innerHTML = '<span>Anda memakai <strong>data contoh</strong> - belum tersambung ke database nyata. Data ini hanya tersimpan sementara di perangkat ini.</span>'
+      + '<span style="display:flex;gap:8px;"><button class="btn-ghost btn-sm" onclick="resetDemo()">Kosongkan data contoh</button><button class="btn-ghost btn-sm" onclick="exitDemo()">Keluar Mode Demo</button></span>';
+  }else{
+    banner.classList.remove('demo-banner');
+    banner.innerHTML = '<span>Belum terhubung ke Firebase - data disimpan sementara di perangkat ini saja.</span>';
+    banner.style.display = on ? 'none' : 'flex';
+  }
+}
+
+function showApp(){
+  $('loginScreen').style.display = 'none';
+  $('pendingScreen').style.display = 'none';
+  $('appRoot').style.display = 'block';
+  $('logoutBtn').style.display = fbReady ? 'inline-block' : 'none';
+}
+function showPending(){
+  $('loginScreen').style.display = 'none';
+  $('appRoot').style.display = 'none';
+  $('pendingScreen').style.display = 'flex';
+  $('logoutBtn').style.display = 'none';
+}
+function showLogin(){
+  $('loginScreen').style.display = 'flex';
+  $('pendingScreen').style.display = 'none';
+  $('appRoot').style.display = 'none';
+  showLoginForm();
+  $('loginEmail').value = '';
+  $('loginPassword').value = '';
+}
+
+window.doLogin = async function(){
+  const email = $('loginEmail').value.trim();
+  const pass = $('loginPassword').value;
+  if(!auth){ showMsg('msgLogin','Firebase belum terhubung.', false); return; }
+  if(!email || !pass){ showMsg('msgLogin','Isi email dan kata sandi.', false); return; }
+  try{
+    await auth.signInWithEmailAndPassword(email, pass);
+  }catch(e){
+    showMsg('msgLogin', terjemahkanErrorAuth(e), false);
+  }
+};
+
+window.doRegister = async function(){
+  const nama = $('loginName').value.trim();
+  const email = $('loginEmail').value.trim();
+  const pass = $('loginPassword').value;
+  if(!auth){ showMsg('msgLogin','Firebase belum terhubung.', false); return; }
+  if(!nama){ showMsg('msgLogin','Nama lengkap wajib diisi.', false); return; }
+  if(!email || !pass){ showMsg('msgLogin','Isi email dan kata sandi.', false); return; }
+  if(pass.length < 6){ showMsg('msgLogin','Kata sandi minimal 6 karakter.', false); return; }
+  sedangProsesDaftar = true;
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    try{ await cred.user.updateProfile({ displayName: nama }); }catch(e){}
+    try{ await ensureUserDoc(cred.user, nama); }catch(e){}
+    await auth.signOut();
+    showToast('ok', 'Akun berhasil dibuat', 'Silakan masuk dengan email dan kata sandi Anda.');
+    showLoginForm();
+    $('loginPassword').value = '';
+  }catch(e){
+    showMsg('msgLogin', terjemahkanErrorAuth(e), false);
+  }finally{
+    sedangProsesDaftar = false;
+  }
+};
+
+window.doLogout = async function(){
+  if(auth) await auth.signOut();
+  fbReady = false;
+  currentUserRole = null;
+  if(userRoleUnsub){ userRoleUnsub(); userRoleUnsub = null; }
+  showLogin();
+};
+
+window.skipLoginLocal = function(){
+  fbReady = false;
+  isDemo = false;
+  setStatus(false);
+  showApp();
+  loadLocal();
+};
+
+// ---------- MODE DEMO ----------
+function buatDataDemo(){
+  const today = todayStr();
+  const kemarin = new Date(Date.now()-86400000).toISOString().slice(0,10);
+  const lusa = new Date(Date.now()-2*86400000).toISOString().slice(0,10);
+  const expDekat = new Date(Date.now()+12*86400000).toISOString().slice(0,10);
+  const expLewat = new Date(Date.now()-5*86400000).toISOString().slice(0,10);
+  const expJauh = new Date(Date.now()+180*86400000).toISOString().slice(0,10);
+
+  const barang = [
+    { id:'demo_1', kode:'BRG-001', nama:'Kabel HDMI 2m', satuan:'pcs', stok:42, tglExp:'' },
+    { id:'demo_2', kode:'BRG-002', nama:'Mouse Wireless', satuan:'pcs', stok:15, tglExp:'' },
+    { id:'demo_3', kode:'BRG-003', nama:'Keyboard Mekanik', satuan:'pcs', stok:4, tglExp:'' },
+    { id:'demo_4', kode:'BRG-004', nama:'Power Bank 10000mAh', satuan:'pcs', stok:23, tglExp: expDekat },
+    { id:'demo_5', kode:'BRG-005', nama:'Charger USB-C 20W', satuan:'pcs', stok:8, tglExp: expLewat },
+    { id:'demo_6', kode:'BRG-006', nama:'Baterai AA (isi 4)', satuan:'pack', stok:30, tglExp: expJauh },
+  ];
+  const transaksi = [
+    { id:'demo_t1', kodeBarang:'BRG-001', namaBarang:'Kabel HDMI 2m', jenis:'masuk', jumlah:50, stokSetelah:50, keterangan:'Pembelian dari supplier utama', tanggal:lusa, createdAt:Date.now()-300000 },
+    { id:'demo_t2', kodeBarang:'BRG-002', namaBarang:'Mouse Wireless', jenis:'masuk', jumlah:20, stokSetelah:20, keterangan:'Restock bulanan', tanggal:lusa, createdAt:Date.now()-290000 },
+    { id:'demo_t3', kodeBarang:'BRG-003', namaBarang:'Keyboard Mekanik', jenis:'masuk', jumlah:10, stokSetelah:10, keterangan:'', tanggal:kemarin, createdAt:Date.now()-200000 },
+    { id:'demo_t4', kodeBarang:'BRG-001', namaBarang:'Kabel HDMI 2m', jenis:'keluar', jumlah:8, stokSetelah:42, keterangan:'Pesanan #1042', tanggal:kemarin, createdAt:Date.now()-190000 },
+    { id:'demo_t5', kodeBarang:'BRG-003', namaBarang:'Keyboard Mekanik', jenis:'keluar', jumlah:6, stokSetelah:4, keterangan:'Pesanan #1043', tanggal:kemarin, createdAt:Date.now()-180000 },
+    { id:'demo_t6', kodeBarang:'BRG-004', namaBarang:'Power Bank 10000mAh', jenis:'masuk', jumlah:25, stokSetelah:25, keterangan:'Pembelian dari supplier utama', tanggal:today, createdAt:Date.now()-5000 },
+    { id:'demo_t7', kodeBarang:'BRG-004', namaBarang:'Power Bank 10000mAh', jenis:'keluar', jumlah:2, stokSetelah:23, keterangan:'Pesanan #1050', tanggal:today, createdAt:Date.now()-4000 },
+    { id:'demo_t8', kodeBarang:'BRG-005', namaBarang:'Charger USB-C 20W', jenis:'keluar', jumlah:3, stokSetelah:8, keterangan:'Pesanan #1051', tanggal:today, createdAt:Date.now()-1000 },
+  ];
+  return { barang, transaksi: transaksi.sort((a,b)=>b.createdAt-a.createdAt) };
+}
+
+window.startDemo = async function(){
+  fbReady = false;
+  isDemo = true;
+  await simpanModeTersimpan('demo');
+  const data = buatDataDemo();
+  barangList = data.barang;
+  transaksiList = data.transaksi;
+  await saveLocalBarang();      // isDemo sudah true -> otomatis tersimpan di kunci demo, data lokal asli tidak tersentuh
+  await saveLocalTransaksi();
+  setStatus(false);
+  showApp();
+  renderAll();
+};
+
+// Mengosongkan data contoh saja (tetap di Mode Demo).
+window.resetDemo = async function(){
+  barangList = [];
+  transaksiList = [];
+  await saveLocalBarang();
+  await saveLocalTransaksi();
+  setStatus(false);
+  renderAll();
+};
+
+// Keluar dari Mode Demo sepenuhnya dan kembali memuat data lokal asli (bukan data contoh).
+window.exitDemo = async function(){
+  isDemo = false;
+  await simpanModeTersimpan('local');
+  fbReady = false;
+  await loadLocal();
+};
+
+function terjemahkanErrorAuth(e){
+  const code = e.code || '';
+  if(code.includes('email-already-in-use')) return 'Email sudah terdaftar, coba masuk.';
+  if(code.includes('invalid-email')) return 'Format email tidak valid.';
+  if(code.includes('wrong-password') || code.includes('invalid-credential')) return 'Email atau kata sandi salah.';
+  if(code.includes('user-not-found')) return 'Akun belum terdaftar, klik Daftar.';
+  if(code.includes('weak-password')) return 'Kata sandi terlalu lemah (minimal 6 karakter).';
+  return e.message || 'Terjadi kesalahan.';
+}
+
+// ---------- IMPOR / EKSPOR CSV ----------
+function csvEscape(val){
+  const s = String(val ?? '');
+  return /[",\n]/.test(s) ? '"' + s.replace(/"/g,'""') + '"' : s;
+}
+
+window.eksporBarangCSV = function(){
+  const rows = [['kode','nama','satuan','stok','tglExp']];
+  barangList.forEach(b=> rows.push([b.kode, b.nama, b.satuan||'pcs', b.stok, b.tglExp||'']));
+  const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'barang-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+};
+
+function parseCSV(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  const rows = lines.map(line=>{
+    const out = []; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const c = line[i];
+      if(inQuotes){
+        if(c==='"'){
+          if(line[i+1]==='"'){ cur+='"'; i++; } else { inQuotes=false; }
+        }else{ cur+=c; }
+      }else{
+        if(c==='"') inQuotes=true;
+        else if(c===','){ out.push(cur); cur=''; }
+        else cur+=c;
+      }
+    }
+    out.push(cur);
+    return out.map(v=>v.trim());
+  });
+  if(!rows.length) return [];
+  const header = rows[0].map(h=>h.toLowerCase());
+  const isHeader = header.includes('kode') && header.includes('nama');
+  const dataRows = isHeader ? rows.slice(1) : rows;
+  const idx = isHeader
+    ? { kode: header.indexOf('kode'), nama: header.indexOf('nama'), satuan: header.indexOf('satuan'), stok: header.indexOf('stok'), tglExp: header.indexOf('tglexp') }
+    : { kode:0, nama:1, satuan:2, stok:3, tglExp:4 };
+  return dataRows.map(r=>({
+    kode: (r[idx.kode]||'').trim(),
+    nama: (r[idx.nama]||'').trim(),
+    satuan: (idx.satuan>-1 ? r[idx.satuan] : '') || 'pcs',
+    stok: parseInt(r[idx.stok], 10) || 0,
+    tglExp: (idx.tglExp>-1 ? (r[idx.tglExp]||'') : '').trim()
+  })).filter(r=>r.kode && r.nama);
+}
+
+window.handleImportFile = async function(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  let text = await file.text();
+  text = text.replace(/^\uFEFF/, ''); // buang BOM tersembunyi (sering ada di CSV hasil ekspor Excel)
+  const rows = parseCSV(text);
+  ev.target.value = '';
+
+  if(!rows.length){
+    showMsg('msgImpor','Tidak ada baris valid ditemukan di file CSV. Pastikan ada kolom kode dan nama terisi, dan baris pertama adalah header.', false);
+    return;
+  }
+
+  let ditambah = 0, diperbarui = 0, gagal = 0, pesanErrorTerakhir = '';
+  for(const row of rows){
+    try{
+      const existing = barangList.find(b=>b.kode.toLowerCase()===row.kode.toLowerCase());
+      if(existing){
+        if(fbReady){
+          await db.collection('barang').doc(existing.id).update({ nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+        }else{
+          existing.nama = row.nama; existing.satuan = row.satuan; existing.stok = row.stok; existing.tglExp = row.tglExp;
+        }
+        diperbarui++;
+      }else{
+        if(fbReady){
+          await db.collection('barang').add({ kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+        }else{
+          barangList.push({ id:'loc_'+Date.now()+'_'+ditambah, kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+        }
+        ditambah++;
+      }
+    }catch(e){
+      gagal++;
+      pesanErrorTerakhir = terjemahkanErrorFirebase(e);
+      console.error('Impor barang gagal untuk baris', row, e);
+    }
+  }
+  if(!fbReady){ await saveLocalBarang(); renderAll(); }
+
+  if(gagal && !ditambah && !diperbarui){
+    const pesan = `Impor gagal untuk semua ${gagal} baris. ${pesanErrorTerakhir || 'Periksa izin menulis ke database (aturan keamanan Firestore) atau koneksi internet.'}`;
+    showMsg('msgImpor', pesan, false);
+    showToast('err', 'Impor gagal', pesanErrorTerakhir || 'Periksa akses Firestore atau koneksi internet.');
+  }else if(gagal){
+    showMsg('msgImpor', `Impor sebagian berhasil: ${ditambah} barang baru, ${diperbarui} diperbarui, ${gagal} gagal (${pesanErrorTerakhir}).`, true);
+  }else{
+    showMsg('msgImpor', `Impor selesai: ${ditambah} barang baru, ${diperbarui} diperbarui.`, true);
+  }
+};
+
+// ---------- EKSPOR / IMPOR RIWAYAT TRANSAKSI ----------
+window.eksporRiwayatCSV = function(){
+  const list = getRiwayatFiltered();
+  if(!list.length){ showMsg('msgRiwayat','Tidak ada transaksi untuk diekspor.', false); return; }
+  const rows = [['tanggal','jenis','kode','nama','jumlah','stokSetelah','keterangan']];
+  list.forEach(t=> rows.push([t.tanggal, t.jenis, t.kodeBarang, t.namaBarang, t.jumlah, t.stokSetelah, t.keterangan||'']));
+  const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'riwayat-transaksi-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showMsg('msgRiwayat', `Ekspor selesai: ${list.length} transaksi.`, true);
+};
+
+function normalisasiJenis(raw){
+  const v = String(raw||'').trim().toLowerCase();
+  if(v==='masuk' || v==='in' || v==='m') return 'masuk';
+  if(v==='keluar' || v==='out' || v==='k') return 'keluar';
+  return null;
+}
+
+function parseRiwayatCSV(text){
+  const lines = text.replace(/\r/g,'').split('\n').filter(l=>l.trim().length);
+  const rows = lines.map(line=>{
+    const out = []; let cur=''; let inQuotes=false;
+    for(let i=0;i<line.length;i++){
+      const c = line[i];
+      if(inQuotes){
+        if(c==='"'){
+          if(line[i+1]==='"'){ cur+='"'; i++; } else { inQuotes=false; }
+        }else{ cur+=c; }
+      }else{
+        if(c==='"') inQuotes=true;
+        else if(c===','){ out.push(cur); cur=''; }
+        else cur+=c;
+      }
+    }
+    out.push(cur);
+    return out.map(v=>v.trim());
+  });
+  if(!rows.length) return [];
+  const header = rows[0].map(h=>h.toLowerCase());
+  const isHeader = header.includes('tanggal') && header.includes('jenis') && header.includes('kode');
+  const dataRows = isHeader ? rows.slice(1) : rows;
+  const idx = isHeader
+    ? { tanggal: header.indexOf('tanggal'), jenis: header.indexOf('jenis'), kode: header.indexOf('kode'), jumlah: header.indexOf('jumlah'), keterangan: header.indexOf('keterangan') }
+    : { tanggal:0, jenis:1, kode:2, jumlah:3, keterangan:4 };
+  return dataRows.map(r=>({
+    tanggal: (r[idx.tanggal]||'').trim() || todayStr(),
+    jenis: normalisasiJenis(r[idx.jenis]),
+    kode: (r[idx.kode]||'').trim(),
+    jumlah: parseInt(r[idx.jumlah], 10) || 0,
+    keterangan: (idx.keterangan>-1 ? (r[idx.keterangan]||'') : '').trim()
+  })).filter(r=>r.kode);
+}
+
+async function prosesImporRiwayat(rows){
+  let berhasil = 0, gagal = 0;
+  for(const row of rows){
+    const barang = barangList.find(b=>b.kode.toLowerCase()===row.kode.toLowerCase());
+    if(!barang || !row.jenis || !row.jumlah || row.jumlah <= 0){ gagal++; continue; }
+
+    if(fbReady){
+      try{
+        const barangRef = db.collection('barang').doc(barang.id);
+        await db.runTransaction(async (tx)=>{
+          const snap = await tx.get(barangRef);
+          if(!snap.exists) throw new Error('Barang tidak ada.');
+          const data = snap.data();
+          const sBaru = row.jenis==='masuk' ? data.stok + row.jumlah : data.stok - row.jumlah;
+          if(sBaru < 0) throw new Error('Stok tidak cukup.');
+          tx.update(barangRef, { stok: sBaru });
+          const tRef = db.collection('transaksi').doc();
+          tx.set(tRef, {
+            kodeBarang: barang.kode, namaBarang: barang.nama, jenis: row.jenis,
+            jumlah: row.jumlah, stokSetelah: sBaru, keterangan: row.keterangan || '',
+            tanggal: row.tanggal, createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+        });
+        berhasil++;
+      }catch(e){ gagal++; }
+    }else{
+      const stokBaru = row.jenis==='masuk' ? barang.stok + row.jumlah : barang.stok - row.jumlah;
+      if(stokBaru < 0){ gagal++; continue; }
+      barang.stok = stokBaru;
+      transaksiList.unshift({
+        id: 'loc_'+Date.now()+'_'+berhasil, kodeBarang: barang.kode, namaBarang: barang.nama,
+        jenis: row.jenis, jumlah: row.jumlah, stokSetelah: stokBaru,
+        keterangan: row.keterangan || '', tanggal: row.tanggal, createdAt: Date.now()
+      });
+      berhasil++;
+    }
+  }
+  if(!fbReady){ await saveLocalBarang(); await saveLocalTransaksi(); renderAll(); }
+  return { berhasil, gagal };
+}
+
+window.handleImportRiwayatFile = async function(ev){
+  const file = ev.target.files[0];
+  if(!file) return;
+  const text = await file.text();
+  const rows = parseRiwayatCSV(text);
+  ev.target.value = '';
+
+  if(!rows.length){ showMsg('msgRiwayat','Tidak ada baris valid ditemukan di file CSV.', false); return; }
+
+  const { berhasil, gagal } = await prosesImporRiwayat(rows);
+  if(berhasil && !gagal){
+    showMsg('msgRiwayat', `Impor selesai: ${berhasil} transaksi ditambahkan.`, true);
+  }else if(berhasil && gagal){
+    showMsg('msgRiwayat', `Impor selesai: ${berhasil} berhasil, ${gagal} gagal (kode tidak ditemukan, jenis tidak valid, atau stok tidak cukup).`, true);
+  }else{
+    showMsg('msgRiwayat', `Impor gagal untuk semua ${gagal} baris - periksa kode barang, jenis (masuk/keluar), dan jumlah.`, false);
+  }
+};
+
+// ---------- CRUD: BARANG ----------
+window.tambahBarang = async function(){
+  const kode = $('fKode').value.trim();
+  const nama = $('fNama').value.trim();
+  const satuan = $('fSatuan').value.trim() || 'pcs';
+  const stok = parseInt($('fStokAwal').value || '0', 10);
+  const tglExp = $('fTglExp').value || '';
+
+  if(!kode || !nama){ showMsg('msgBarang','Kode dan nama barang wajib diisi.', false); return; }
+  if(barangList.some(b=>b.kode.toLowerCase()===kode.toLowerCase())){
+    showMsg('msgBarang','Kode barang sudah dipakai.', false); return;
+  }
+
+  const item = { kode, nama, satuan, stok, tglExp };
+  if(fbReady){
+    await db.collection('barang').add(item);
+  }else{
+    item.id = 'loc_'+Date.now();
+    barangList.push(item);
+    await saveLocalBarang();
+    renderAll();
+  }
+  $('fKode').value=''; $('fNama').value=''; $('fSatuan').value=''; $('fStokAwal').value='0'; $('fTglExp').value='';
+  syncToSheets({ sheet:'master', tanggal: todayStr(), kode, nama, satuan, stok, tglExp: tglExp || '' });
+  showMsg('msgBarang','Barang tersimpan.', true);
+};
+
+// ---------- EDIT & HAPUS BARANG ----------
+window.editBarangPrompt = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  openModal(`
+    <h3 class="modal-title">Edit barang</h3>
+    <label>Kode barang</label>
+    <input type="text" id="modalBarangKode" value="${escapeHtml(b.kode)}">
+    <label>Nama barang</label>
+    <input type="text" id="modalBarangNama" value="${escapeHtml(b.nama)}">
+    <div class="row">
+      <div><label>Satuan</label><input type="text" id="modalBarangSatuan" value="${escapeHtml(b.satuan||'pcs')}"></div>
+      <div><label>Stok</label><input type="number" id="modalBarangStok" min="0" value="${b.stok}"></div>
+    </div>
+    <p class="field-help">Tanggal kadaluarsa diatur lewat menu Exp. Produk.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanEditBarang('${id}')">Simpan perubahan</button>
+    </div>
+  `);
+};
+
+window.simpanEditBarang = async function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  const kodeBaru = $('modalBarangKode').value.trim();
+  const namaBaru = $('modalBarangNama').value.trim();
+  const satuanBaru = $('modalBarangSatuan').value.trim() || 'pcs';
+  const stokBaru = parseInt($('modalBarangStok').value || '0', 10);
+
+  if(!kodeBaru || !namaBaru){ showMsg('msgModal','Kode dan nama barang wajib diisi.', false); return; }
+  const dupe = barangList.find(x=>x.id!==id && x.kode.toLowerCase()===kodeBaru.toLowerCase());
+  if(dupe){ showMsg('msgModal','Kode barang sudah dipakai barang lain.', false); return; }
+
+  if(fbReady){
+    try{
+      await db.collection('barang').doc(id).update({ kode: kodeBaru, nama: namaBaru, satuan: satuanBaru, stok: stokBaru });
+    }catch(e){ showMsg('msgModal', terjemahkanErrorFirebase(e), false); return; }
+  }else{
+    b.kode = kodeBaru; b.nama = namaBaru; b.satuan = satuanBaru; b.stok = stokBaru;
+    await saveLocalBarang();
+    renderAll();
+  }
+  closeModal();
+  showToast('ok', 'Barang diperbarui', `${namaBaru} berhasil disimpan.`);
+};
+
+window.hapusBarangPrompt = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  openModal(`
+    <h3 class="modal-title">Hapus barang?</h3>
+    <p class="modal-text"><strong>${escapeHtml(b.nama)}</strong> <span class="mono">(${escapeHtml(b.kode)})</span> akan dihapus dari kartu stok dan tidak akan muncul lagi untuk transaksi baru. Riwayat transaksi yang sudah tercatat sebelumnya tidak ikut terhapus. Tindakan ini tidak bisa dibatalkan.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-keluar" onclick="hapusBarang('${id}')">Ya, hapus</button>
+    </div>
+  `);
+};
+
+window.hapusBarang = async function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(fbReady){
+    try{
+      await db.collection('barang').doc(id).delete();
+    }catch(e){ showMsg('msgModal', terjemahkanErrorFirebase(e), false); return; }
+  }else{
+    barangList = barangList.filter(x=>x.id!==id);
+    await saveLocalBarang();
+    renderAll();
+  }
+  closeModal();
+  showToast('ok', 'Barang dihapus', b ? `${b.nama} sudah dihapus dari kartu stok.` : 'Kartu stok diperbarui.');
+};
+
+// ---------- CRUD: TRANSAKSI ----------
+window.simpanTransaksi = async function(){
+  const barangId = $('fBarangSelect').value;
+  const jumlah = parseInt($('fJumlah').value || '0', 10);
+  const tanggal = $('fTanggal').value || todayStr();
+  const keterangan = $('fKeterangan').value.trim();
+
+  if(!barangId){ showMsg('msgTransaksi','Pilih barang terlebih dahulu.', false); return; }
+  if(!jumlah || jumlah <= 0){ showMsg('msgTransaksi','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.id===barangId);
+  if(!barang){ showMsg('msgTransaksi','Barang tidak ditemukan.', false); return; }
+
+  let stokBaru = jenisAktif==='masuk' ? barang.stok + jumlah : barang.stok - jumlah;
+  if(stokBaru < 0){ showMsg('msgTransaksi','Stok tidak cukup untuk transaksi keluar ini.', false); return; }
+
+  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jenis: jenisAktif, jumlah, stokSetelah: stokBaru, keterangan, tanggal };
+
+  if(fbReady){
+    try{
+      const barangRef = db.collection('barang').doc(barangId);
+      await db.runTransaction(async (tx)=>{
+        const snap = await tx.get(barangRef);
+        if(!snap.exists) throw new Error('Barang sudah tidak ada.');
+        const data = snap.data();
+        const sBaru = jenisAktif==='masuk' ? data.stok + jumlah : data.stok - jumlah;
+        if(sBaru < 0) throw new Error('Stok tidak cukup.');
+        tx.update(barangRef, { stok: sBaru });
+        const tRef = db.collection('transaksi').doc();
+        tx.set(tRef, { ...catatan, stokSetelah: sBaru, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      });
+    }catch(e){
+      showMsg('msgTransaksi', e.message, false); return;
+    }
+  }else{
+    barang.stok = stokBaru;
+    catatan.id = 'loc_'+Date.now();
+    catatan.createdAt = Date.now();
+    transaksiList.unshift(catatan);
+    await saveLocalBarang();
+    await saveLocalTransaksi();
+    renderAll();
+  }
+
+  syncToSheets({
+    sheet: jenisAktif==='masuk' ? 'masuk' : 'keluar',
+    tanggal: catatan.tanggal, jenis: catatan.jenis, kode: catatan.kodeBarang,
+    nama: catatan.namaBarang, jumlah: catatan.jumlah, stokSetelah: catatan.stokSetelah,
+    keterangan: catatan.keterangan || ''
+  });
+  $('fBarangSelect').value = '';
+  $('fBarangSearch').value = '';
+  $('fJumlah').value = 0;
+  $('fKeterangan').value = '';
+  showMsg('msgTransaksi','Transaksi tersimpan.', true);
+};
+
+// ---------- MODAL ----------
+function openModal(html){
+  $('modalBox').innerHTML = html;
+  $('modalOverlay').style.display = 'flex';
+}
+window.closeModal = function(){
+  $('modalOverlay').style.display = 'none';
+};
+
+// ---------- EDIT & HAPUS TRANSAKSI ----------
+window.editTransaksiPrompt = function(id){
+  const t = transaksiList.find(x=>x.id===id);
+  if(!t) return;
+  modalJenisAktif = t.jenis;
+  openModal(`
+    <h3 class="modal-title">Edit transaksi</h3>
+    <p class="modal-text">${escapeHtml(t.namaBarang)} <span class="mono">(${escapeHtml(t.kodeBarang)})</span></p>
+    <div class="jenis-toggle">
+      <div class="jenis-btn ${t.jenis==='masuk'?'sel-masuk':''}" id="modalJenisMasuk" onclick="setModalJenis('masuk')">↓ Masuk</div>
+      <div class="jenis-btn ${t.jenis==='keluar'?'sel-keluar':''}" id="modalJenisKeluar" onclick="setModalJenis('keluar')">↑ Keluar</div>
+    </div>
+    <div class="row">
+      <div><label>Jumlah</label><input type="number" id="modalJumlah" min="1" value="${t.jumlah}"></div>
+      <div><label>Tanggal</label><input type="date" id="modalTanggal" value="${escapeHtml(t.tanggal)}"></div>
+    </div>
+    <label>Keterangan</label>
+    <textarea id="modalKeterangan" rows="2">${escapeHtml(t.keterangan||'')}</textarea>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanEditTransaksi('${id}')">Simpan perubahan</button>
+    </div>
+  `);
+};
+
+window.setModalJenis = function(j){
+  modalJenisAktif = j;
+  $('modalJenisMasuk').classList.toggle('sel-masuk', j==='masuk');
+  $('modalJenisKeluar').classList.toggle('sel-keluar', j==='keluar');
+};
+
+window.simpanEditTransaksi = async function(id){
+  const t = transaksiList.find(x=>x.id===id);
+  if(!t) return;
+  const jumlahBaru = parseInt($('modalJumlah').value || '0', 10);
+  const tanggalBaru = $('modalTanggal').value || t.tanggal;
+  const keteranganBaru = $('modalKeterangan').value.trim();
+  if(!jumlahBaru || jumlahBaru <= 0){ showMsg('msgModal','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.kode===t.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        let stokBaru = t.stokSetelah;
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          const reverted = t.jenis==='masuk' ? data.stok - t.jumlah : data.stok + t.jumlah;
+          stokBaru = modalJenisAktif==='masuk' ? reverted + jumlahBaru : reverted - jumlahBaru;
+          if(stokBaru < 0) throw new Error('Stok tidak cukup untuk perubahan ini.');
+          tx.update(barangRef, { stok: stokBaru });
+        }
+        tx.update(db.collection('transaksi').doc(id), {
+          jenis: modalJenisAktif, jumlah: jumlahBaru, tanggal: tanggalBaru,
+          keterangan: keteranganBaru, stokSetelah: stokBaru
+        });
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){
+      const reverted = t.jenis==='masuk' ? barang.stok - t.jumlah : barang.stok + t.jumlah;
+      const stokBaru = modalJenisAktif==='masuk' ? reverted + jumlahBaru : reverted - jumlahBaru;
+      if(stokBaru < 0){ showMsg('msgModal','Stok tidak cukup untuk perubahan ini.', false); return; }
+      barang.stok = stokBaru;
+      t.stokSetelah = stokBaru;
+    }
+    t.jenis = modalJenisAktif; t.jumlah = jumlahBaru; t.tanggal = tanggalBaru; t.keterangan = keteranganBaru;
+    await saveLocalBarang();
+    await saveLocalTransaksi();
+    renderAll();
+  }
+  closeModal();
+};
+
+window.hapusTransaksiPrompt = function(id){
+  const t = transaksiList.find(x=>x.id===id);
+  if(!t) return;
+  const barang = barangList.find(b=>b.kode===t.kodeBarang);
+  openModal(`
+    <h3 class="modal-title">Hapus transaksi?</h3>
+    <p class="modal-text">Transaksi <strong>${t.jenis==='masuk'?'masuk':'keluar'} ${t.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(t.namaBarang)} pada ${escapeHtml(t.tanggal)} akan dihapus dan stok barang disesuaikan kembali. Tindakan ini tidak bisa dibatalkan.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-keluar" onclick="hapusTransaksi('${id}')">Ya, hapus</button>
+    </div>
+  `);
+};
+
+window.hapusTransaksi = async function(id){
+  const t = transaksiList.find(x=>x.id===id);
+  if(!t) return;
+  const barang = barangList.find(b=>b.kode===t.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          const reverted = t.jenis==='masuk' ? data.stok - t.jumlah : data.stok + t.jumlah;
+          tx.update(barangRef, { stok: reverted });
+        }
+        tx.delete(db.collection('transaksi').doc(id));
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){
+      barang.stok = t.jenis==='masuk' ? barang.stok - t.jumlah : barang.stok + t.jumlah;
+    }
+    transaksiList = transaksiList.filter(x=>x.id!==id);
+    await saveLocalBarang();
+    await saveLocalTransaksi();
+    renderAll();
+  }
+  closeModal();
+};
+
+// ---------- EDIT TANGGAL KADALUARSA ----------
+window.editExpPrompt = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  openModal(`
+    <h3 class="modal-title">Atur tanggal kadaluarsa</h3>
+    <p class="modal-text">${escapeHtml(b.nama)} <span class="mono">(${escapeHtml(b.kode)})</span></p>
+    <label>Tanggal kadaluarsa</label>
+    <input type="date" id="modalTglExp" value="${escapeHtml(b.tglExp||'')}">
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      ${b.tglExp ? '<button class="btn-ghost" onclick="hapusTglExp(\''+id+'\')">Hapus tanggal</button>' : ''}
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanTglExp('${id}')">Simpan</button>
+    </div>
+  `);
+};
+
+window.simpanTglExp = async function(id){
+  const tglBaru = $('modalTglExp').value || '';
+  await updateBarangTglExp(id, tglBaru);
+  closeModal();
+};
+
+window.hapusTglExp = async function(id){
+  await updateBarangTglExp(id, '');
+  closeModal();
+};
+
+async function updateBarangTglExp(id, tglExp){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  if(fbReady){
+    try{
+      await db.collection('barang').doc(id).update({ tglExp });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    b.tglExp = tglExp;
+    await saveLocalBarang();
+    renderAll();
+  }
+}
+
+function syncToSheets(payload){
+  if(!sheetsUrl) return;
+  fetch(sheetsUrl, {
+    method:'POST',
+    mode:'no-cors',
+    headers:{ 'Content-Type':'text/plain' },
+    body: JSON.stringify(payload)
+  }).catch(()=>{ /* diam-diam gagal, Firestore tetap jadi sumber utama */ });
+}
+
+// ---------- RENDER ----------
+function sortBarangList(){
+  barangList.sort((a,b)=> (a.kode||'').localeCompare(b.kode||'', undefined, { numeric:true, sensitivity:'base' }));
+}
+
+function renderAll(){
+  sortBarangList();
+  renderStockGrid();
+  renderBarangSelect();
+  renderDashboard();
+  renderRiwayat();
+  renderExpProduk();
+  renderBarangRusak();
+  renderKelolaUser();
+  applyRoleUI();
+}
+
+function renderStockGrid(){
+  const el = $('stockGrid');
+  const countEl = $('stokCount');
+  if(!barangList.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = '<div class="empty">Belum ada barang. Tambahkan di panel sebelah kanan.</div>';
+    return;
+  }
+  const q = stokQuery.toLowerCase();
+  const list = q
+    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : barangList;
+
+  if(countEl){
+    countEl.textContent = q ? `Menampilkan ${list.length} dari ${barangList.length} barang` : '';
+  }
+  if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian.</div>'; return; }
+
+  el.innerHTML = list.map(b=>{
+    const low = b.stok <= 5;
+    return `<div class="stock-card">
+      <div class="stamp ${low?'':'ok'}">${low?'STOK TIPIS':'AMAN'}</div>
+      <div class="kode">${escapeHtml(b.kode)}</div>
+      <div class="nama">${escapeHtml(b.nama)}</div>
+      <div class="stok-row"><span class="stok-val">${b.stok}</span><span class="stok-unit">${escapeHtml(b.satuan||'pcs')}</span></div>
+      <div class="stock-actions">
+        <button class="icon-btn" title="Edit barang" onclick="editBarangPrompt('${b.id}')">✎</button>
+        <button class="icon-btn danger" title="Hapus barang" onclick="hapusBarangPrompt('${b.id}')">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.onStokSearch = function(ev){
+  stokQuery = ev.target.value.trim();
+  renderStockGrid();
+};
+
+let barangSearchHighlight = -1;
+
+function labelBarang(b){
+  return `${b.kode} - ${b.nama} (stok: ${b.stok})`;
+}
+
+// Menjaga input pencarian tetap sinkron kalau barang yg dipilih berubah stoknya,
+// atau menghapus pilihan kalau barangnya sudah tidak ada lagi.
+function renderBarangSelect(){
+  const selEl = $('fBarangSelect');
+  if(!selEl) return;
+  const selId = selEl.value;
+  if(selId){
+    const b = barangList.find(x=>x.id===selId);
+    if(b){ $('fBarangSearch').value = labelBarang(b); }
+    else{ selEl.value=''; $('fBarangSearch').value=''; }
+  }
+}
+
+function renderBarangSearchList(filterText){
+  const list = $('barangSearchList');
+  const q = (filterText||'').trim().toLowerCase();
+  const filtered = q
+    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : barangList;
+  barangSearchHighlight = filtered.length ? 0 : -1;
+  if(!filtered.length){
+    list.innerHTML = '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>';
+  }else{
+    list.innerHTML = filtered.map((b,i)=>`<div class="searchable-select-item${i===0?' hi':''}" data-id="${b.id}" onclick="pilihBarangSearch('${b.id}')"><span class="ss-kode">${escapeHtml(b.kode)}</span> - ${escapeHtml(b.nama)} <span style="color:var(--text-dim)">(stok: ${b.stok})</span></div>`).join('');
+  }
+  list.classList.add('show');
+}
+
+window.onBarangSearchInput = function(ev){
+  $('fBarangSelect').value = ''; // pilihan lama dibatalkan begitu user mengetik ulang
+  renderBarangSearchList(ev.target.value);
+};
+
+window.onBarangSearchFocus = function(){
+  renderBarangSearchList($('fBarangSearch').value);
+};
+
+window.pilihBarangSearch = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  $('fBarangSelect').value = id;
+  $('fBarangSearch').value = labelBarang(b);
+  $('barangSearchList').classList.remove('show');
+};
+
+window.onBarangSearchKeydown = function(ev){
+  const list = $('barangSearchList');
+  const items = list.querySelectorAll('.searchable-select-item');
+  if(!items.length) return;
+  if(ev.key==='ArrowDown'){
+    ev.preventDefault();
+    barangSearchHighlight = Math.min(barangSearchHighlight+1, items.length-1);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===barangSearchHighlight));
+    items[barangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='ArrowUp'){
+    ev.preventDefault();
+    barangSearchHighlight = Math.max(barangSearchHighlight-1, 0);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===barangSearchHighlight));
+    items[barangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='Enter'){
+    ev.preventDefault();
+    if(barangSearchHighlight>=0 && items[barangSearchHighlight]){
+      pilihBarangSearch(items[barangSearchHighlight].dataset.id);
+    }
+  }else if(ev.key==='Escape'){
+    list.classList.remove('show');
+  }
+};
+
+document.addEventListener('click', (ev)=>{
+  const wrap = $('barangSearchWrap');
+  const list = $('barangSearchList');
+  if(wrap && list && !wrap.contains(ev.target)){
+    list.classList.remove('show');
+  }
+});
+
+function renderDashboard(){
+  $('statTotalBarang').textContent = barangList.length;
+  const today = todayStr();
+  const todays = transaksiList.filter(t=>t.tanggal===today);
+  $('statMasukHariIni').textContent = todays.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+t.jumlah,0);
+  $('statKeluarHariIni').textContent = todays.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+t.jumlah,0);
+
+  const el = $('dashRiwayat');
+  const recent = transaksiList.slice(0,6);
+  if(!recent.length){ el.innerHTML = '<div class="empty">Belum ada transaksi.</div>'; return; }
+  el.innerHTML = riwayatTableHtml(recent);
+}
+
+function getRiwayatFiltered(){
+  return transaksiList.filter(t=>{
+    if(riwayatFilter !== 'semua' && t.jenis !== riwayatFilter) return false;
+    if(riwayatDari && (!t.tanggal || t.tanggal < riwayatDari)) return false;
+    if(riwayatSampai && (!t.tanggal || t.tanggal > riwayatSampai)) return false;
+    if(riwayatQuery){
+      const q = riwayatQuery.toLowerCase();
+      const hay = `${t.namaBarang||''} ${t.kodeBarang||''} ${t.keterangan||''}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+window.onRiwayatDateChange = function(){
+  riwayatDari = $('riwayatDariTanggal').value || '';
+  riwayatSampai = $('riwayatSampaiTanggal').value || '';
+  if(riwayatDari && riwayatSampai && riwayatDari > riwayatSampai){
+    showMsg('msgRiwayat', 'Tanggal "Dari" tidak boleh setelah tanggal "s/d".', false);
+  }
+  $('dateFilterGroup').classList.toggle('active', !!(riwayatDari || riwayatSampai));
+  renderRiwayat();
+};
+
+window.resetRiwayatDate = function(){
+  riwayatDari = '';
+  riwayatSampai = '';
+  $('riwayatDariTanggal').value = '';
+  $('riwayatSampaiTanggal').value = '';
+  $('dateFilterGroup').classList.remove('active');
+  renderRiwayat();
+};
+
+window.setRiwayatFilter = function(f){
+  riwayatFilter = f;
+  $('filterSemuaBtn').classList.toggle('active', f==='semua');
+  $('filterMasukBtn').classList.toggle('active', f==='masuk');
+  $('filterKeluarBtn').classList.toggle('active', f==='keluar');
+  renderRiwayat();
+};
+
+window.onRiwayatSearch = function(ev){
+  riwayatQuery = ev.target.value.trim();
+  renderRiwayat();
+};
+
+function renderRiwayat(){
+  const el = $('riwayatTable');
+  const countEl = $('riwayatCount');
+  if(!$('riwayatTable')) return;
+  if(!transaksiList.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = '<div class="empty">Belum ada transaksi.</div>';
+    return;
+  }
+  const list = getRiwayatFiltered();
+  if(countEl){
+    const aktifFilter = riwayatQuery || riwayatFilter !== 'semua' || riwayatDari || riwayatSampai;
+    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${transaksiList.length} transaksi` : '';
+  }
+  if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada transaksi yang cocok dengan pencarian/filter.</div>'; return; }
+  el.innerHTML = riwayatTableHtml(list);
+}
+
+function riwayatTableHtml(list){
+  return `<div class="table-scroll"><table><thead><tr>
+    <th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Jumlah</th><th>Stok setelah</th><th>Keterangan</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${list.map(t=>`<tr>
+      <td class="mono">${escapeHtml(t.tanggal||'')}</td>
+      <td><span class="tag ${t.jenis}">${t.jenis==='masuk'?'Masuk':'Keluar'}</span></td>
+      <td>${escapeHtml(t.namaBarang||'')} <span class="mono" style="color:var(--text-dim)">(${escapeHtml(t.kodeBarang||'')})</span></td>
+      <td class="mono">${t.jenis==='masuk'?'+':'-'}${t.jumlah}</td>
+      <td class="mono">${t.stokSetelah}</td>
+      <td>${escapeHtml(t.keterangan||' - ')}</td>
+      <td><div class="action-btns">
+        <button class="icon-btn" title="Edit" onclick="editTransaksiPrompt('${t.id}')">✎</button>
+        <button class="icon-btn danger" title="Hapus" onclick="hapusTransaksiPrompt('${t.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+// ---------- EXP PRODUK ----------
+function getExpStatus(tglExp){
+  if(!tglExp) return { status:'none', label:'Belum Diatur', days:null };
+  const today = new Date(todayStr()+'T00:00:00');
+  const exp = new Date(tglExp+'T00:00:00');
+  const days = Math.round((exp - today) / 86400000);
+  if(days < 0) return { status:'expired', label:'Kadaluarsa', days };
+  if(days <= 30) return { status:'soon', label:'Segera Kadaluarsa', days };
+  return { status:'safe', label:'Aman', days };
+}
+
+function getExpFiltered(){
+  return barangList.filter(b=>{
+    const st = getExpStatus(b.tglExp).status;
+    if(expFilter !== 'semua' && st !== expFilter) return false;
+    if(expQuery){
+      const q = expQuery.toLowerCase();
+      const hay = `${b.kode||''} ${b.nama||''}`.toLowerCase();
+      if(!hay.includes(q)) return false;
+    }
+    return true;
+  });
+}
+
+window.onExpSearch = function(ev){
+  expQuery = ev.target.value.trim();
+  renderExpProduk();
+};
+
+window.setExpFilter = function(f){
+  expFilter = f;
+  $('expFilterSemuaBtn').classList.toggle('active', f==='semua');
+  $('expFilterExpiredBtn').classList.toggle('active', f==='expired');
+  $('expFilterSoonBtn').classList.toggle('active', f==='soon');
+  $('expFilterSafeBtn').classList.toggle('active', f==='safe');
+  $('expFilterNoneBtn').classList.toggle('active', f==='none');
+  renderExpProduk();
+};
+
+function renderExpProduk(){
+  const el = $('expGrid');
+  const countEl = $('expCount');
+  if(!el) return;
+
+  const expiredCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='expired').length;
+  const soonCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='soon').length;
+  const safeCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='safe').length;
+  $('statExpExpired').textContent = expiredCount;
+  $('statExpSoon').textContent = soonCount;
+  $('statExpSafe').textContent = safeCount;
+
+  if(!barangList.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = '<div class="empty">Belum ada barang. Tambahkan barang dulu di menu Barang.</div>';
+    return;
+  }
+
+  const list = getExpFiltered();
+  const aktifFilter = expQuery || expFilter !== 'semua';
+  if(countEl){
+    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${barangList.length} barang` : '';
+  }
+  if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian/filter.</div>'; return; }
+
+  el.innerHTML = list.map(b=>{
+    const info = getExpStatus(b.tglExp);
+    let keterangan;
+    if(info.status==='none') keterangan = '';
+    else if(info.status==='expired') keterangan = `Lewat ${Math.abs(info.days)} hari`;
+    else keterangan = `${info.days} hari lagi`;
+    return `<div class="exp-card">
+      <div class="exp-badge ${info.status}">${info.label}</div>
+      <div class="kode" style="margin-top:22px;">${escapeHtml(b.kode)}</div>
+      <div class="nama">${escapeHtml(b.nama)}</div>
+      <div class="exp-row">
+        <span class="exp-tgl ${b.tglExp?'':'kosong'}">${b.tglExp ? escapeHtml(b.tglExp) + (keterangan?' - '+keterangan:'') : 'Tanggal belum diatur'}</span>
+      </div>
+      <div class="exp-actions">
+        <button class="icon-btn" title="Atur tanggal kadaluarsa" onclick="editExpPrompt('${b.id}')">✎</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ---------- BARANG RUSAK ----------
+function getRusakFiltered(){
+  if(!rusakQuery) return rusakList;
+  const q = rusakQuery.toLowerCase();
+  return rusakList.filter(r=>{
+    const hay = `${r.namaBarang||''} ${r.kodeBarang||''} ${r.keterangan||''}`.toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+window.onRusakSearch = function(ev){
+  rusakQuery = ev.target.value.trim();
+  renderBarangRusak();
+};
+
+window.eksporRusakCSV = function(){
+  const list = getRusakFiltered();
+  if(!list.length){ showMsg('msgRusak','Tidak ada catatan barang rusak untuk diekspor.', false); return; }
+  const rows = [['tanggal','kode','nama','jumlah','keterangan']];
+  list.forEach(r=> rows.push([r.tanggal, r.kodeBarang, r.namaBarang, r.jumlah, r.keterangan||'']));
+  const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'barang-rusak-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showMsg('msgRusak', `Ekspor selesai: ${list.length} catatan.`, true);
+};
+
+function rusakTableHtml(list){
+  return `<div class="table-scroll"><table><thead><tr>
+    <th>Tanggal</th><th>Barang</th><th>Jumlah Rusak</th><th>Keterangan</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${list.map(r=>`<tr>
+      <td class="mono">${escapeHtml(r.tanggal||'')}</td>
+      <td>${escapeHtml(r.namaBarang||'')} <span class="mono" style="color:var(--text-dim)">(${escapeHtml(r.kodeBarang||'')})</span></td>
+      <td class="mono">-${r.jumlah}</td>
+      <td>${escapeHtml(r.keterangan||' - ')}</td>
+      <td><div class="action-btns">
+        <button class="icon-btn" title="Edit" onclick="editRusakPrompt('${r.id}')">✎</button>
+        <button class="icon-btn danger" title="Hapus" onclick="hapusRusakPrompt('${r.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function renderBarangRusak(){
+  const tableEl = $('rusakTable');
+  const countEl = $('rusakCount');
+  if(!tableEl) return;
+
+  const today = new Date(todayStr()+'T00:00:00');
+  const bulanIni = rusakList.filter(r=>{
+    if(!r.tanggal) return false;
+    const d = new Date(r.tanggal+'T00:00:00');
+    return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth();
+  });
+  $('statRusakKejadian').textContent = rusakList.length;
+  $('statRusakBulanIni').textContent = bulanIni.reduce((s,r)=>s+(r.jumlah||0),0);
+  $('statRusakTotal').textContent = rusakList.reduce((s,r)=>s+(r.jumlah||0),0);
+
+  if(!rusakList.length){
+    if(countEl) countEl.textContent = '';
+    tableEl.innerHTML = '<div class="empty">Belum ada catatan barang rusak.</div>';
+    return;
+  }
+  const list = getRusakFiltered();
+  if(countEl){
+    countEl.textContent = rusakQuery ? `Menampilkan ${list.length} dari ${rusakList.length} catatan` : '';
+  }
+  if(!list.length){ tableEl.innerHTML = '<div class="empty">Tidak ada catatan yang cocok dengan pencarian.</div>'; return; }
+  tableEl.innerHTML = rusakTableHtml(list);
+}
+
+function labelBarangRusak(b){
+  return `${b.kode} - ${b.nama} (stok: ${b.stok})`;
+}
+
+function renderRusakBarangSearchList(filterText){
+  const list = $('rusakBarangSearchList');
+  const q = (filterText||'').trim().toLowerCase();
+  const filtered = q
+    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : barangList;
+  rusakBarangSearchHighlight = filtered.length ? 0 : -1;
+  if(!filtered.length){
+    list.innerHTML = '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>';
+  }else{
+    list.innerHTML = filtered.map((b,i)=>`<div class="searchable-select-item${i===0?' hi':''}" data-id="${b.id}" onclick="pilihRusakBarangSearch('${b.id}')"><span class="ss-kode">${escapeHtml(b.kode)}</span> - ${escapeHtml(b.nama)} <span style="color:var(--text-dim)">(stok: ${b.stok})</span></div>`).join('');
+  }
+  list.classList.add('show');
+}
+
+window.onRusakBarangSearchInput = function(ev){
+  $('fRusakBarangSelect').value = '';
+  renderRusakBarangSearchList(ev.target.value);
+};
+
+window.onRusakBarangSearchFocus = function(){
+  renderRusakBarangSearchList($('fRusakBarangSearch').value);
+};
+
+window.pilihRusakBarangSearch = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  $('fRusakBarangSelect').value = id;
+  $('fRusakBarangSearch').value = labelBarangRusak(b);
+  $('rusakBarangSearchList').classList.remove('show');
+};
+
+window.onRusakBarangSearchKeydown = function(ev){
+  const list = $('rusakBarangSearchList');
+  const items = list.querySelectorAll('.searchable-select-item');
+  if(!items.length) return;
+  if(ev.key==='ArrowDown'){
+    ev.preventDefault();
+    rusakBarangSearchHighlight = Math.min(rusakBarangSearchHighlight+1, items.length-1);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===rusakBarangSearchHighlight));
+    items[rusakBarangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='ArrowUp'){
+    ev.preventDefault();
+    rusakBarangSearchHighlight = Math.max(rusakBarangSearchHighlight-1, 0);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===rusakBarangSearchHighlight));
+    items[rusakBarangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='Enter'){
+    ev.preventDefault();
+    if(rusakBarangSearchHighlight>=0 && items[rusakBarangSearchHighlight]){
+      pilihRusakBarangSearch(items[rusakBarangSearchHighlight].dataset.id);
+    }
+  }else if(ev.key==='Escape'){
+    list.classList.remove('show');
+  }
+};
+
+document.addEventListener('click', (ev)=>{
+  const wrap = $('rusakBarangSearchWrap');
+  const list = $('rusakBarangSearchList');
+  if(wrap && list && !wrap.contains(ev.target)){
+    list.classList.remove('show');
+  }
+});
+
+window.simpanRusak = async function(){
+  const barangId = $('fRusakBarangSelect').value;
+  const jumlah = parseInt($('fRusakJumlah').value || '0', 10);
+  const tanggal = $('fRusakTanggal').value || todayStr();
+  const keterangan = $('fRusakKeterangan').value.trim();
+
+  if(!barangId){ showMsg('msgRusak','Pilih barang terlebih dahulu.', false); return; }
+  if(!jumlah || jumlah <= 0){ showMsg('msgRusak','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.id===barangId);
+  if(!barang){ showMsg('msgRusak','Barang tidak ditemukan.', false); return; }
+
+  const stokBaru = barang.stok - jumlah;
+  if(stokBaru < 0){ showMsg('msgRusak','Stok tidak cukup - jumlah rusak melebihi stok yang ada.', false); return; }
+
+  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal };
+
+  if(fbReady){
+    try{
+      const barangRef = db.collection('barang').doc(barangId);
+      await db.runTransaction(async (tx)=>{
+        const snap = await tx.get(barangRef);
+        if(!snap.exists) throw new Error('Barang sudah tidak ada.');
+        const data = snap.data();
+        const sBaru = data.stok - jumlah;
+        if(sBaru < 0) throw new Error('Stok tidak cukup.');
+        tx.update(barangRef, { stok: sBaru });
+        const rRef = db.collection('kerusakan').doc();
+        tx.set(rRef, { ...catatan, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+      });
+    }catch(e){
+      showMsg('msgRusak', e.message, false); return;
+    }
+  }else{
+    barang.stok = stokBaru;
+    catatan.id = 'loc_'+Date.now();
+    catatan.createdAt = Date.now();
+    rusakList.unshift(catatan);
+    await saveLocalBarang();
+    await saveLocalRusak();
+    renderAll();
+  }
+
+  $('fRusakBarangSelect').value = '';
+  $('fRusakBarangSearch').value = '';
+  $('fRusakJumlah').value = 1;
+  $('fRusakKeterangan').value = '';
+  showMsg('msgRusak','Barang rusak tercatat.', true);
+};
+
+window.editRusakPrompt = function(id){
+  const r = rusakList.find(x=>x.id===id);
+  if(!r) return;
+  openModal(`
+    <h3 class="modal-title">Edit catatan barang rusak</h3>
+    <p class="modal-text">${escapeHtml(r.namaBarang)} <span class="mono">(${escapeHtml(r.kodeBarang)})</span></p>
+    <div class="row">
+      <div><label>Jumlah rusak</label><input type="number" id="modalRusakJumlah" min="1" value="${r.jumlah}"></div>
+      <div><label>Tanggal</label><input type="date" id="modalRusakTanggal" value="${escapeHtml(r.tanggal)}"></div>
+    </div>
+    <label>Keterangan</label>
+    <textarea id="modalRusakKeterangan" rows="2">${escapeHtml(r.keterangan||'')}</textarea>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanEditRusak('${id}')">Simpan perubahan</button>
+    </div>
+  `);
+};
+
+window.simpanEditRusak = async function(id){
+  const r = rusakList.find(x=>x.id===id);
+  if(!r) return;
+  const jumlahBaru = parseInt($('modalRusakJumlah').value || '0', 10);
+  const tanggalBaru = $('modalRusakTanggal').value || r.tanggal;
+  const keteranganBaru = $('modalRusakKeterangan').value.trim();
+  if(!jumlahBaru || jumlahBaru <= 0){ showMsg('msgModal','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          const reverted = data.stok + r.jumlah; // kembalikan stok yang tadinya dikurangi
+          const stokBaru = reverted - jumlahBaru;
+          if(stokBaru < 0) throw new Error('Stok tidak cukup untuk perubahan ini.');
+          tx.update(barangRef, { stok: stokBaru });
+        }
+        tx.update(db.collection('kerusakan').doc(id), {
+          jumlah: jumlahBaru, tanggal: tanggalBaru, keterangan: keteranganBaru
+        });
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){
+      const reverted = barang.stok + r.jumlah;
+      const stokBaru = reverted - jumlahBaru;
+      if(stokBaru < 0){ showMsg('msgModal','Stok tidak cukup untuk perubahan ini.', false); return; }
+      barang.stok = stokBaru;
+    }
+    r.jumlah = jumlahBaru; r.tanggal = tanggalBaru; r.keterangan = keteranganBaru;
+    await saveLocalBarang();
+    await saveLocalRusak();
+    renderAll();
+  }
+  closeModal();
+};
+
+window.hapusRusakPrompt = function(id){
+  const r = rusakList.find(x=>x.id===id);
+  if(!r) return;
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+  openModal(`
+    <h3 class="modal-title">Hapus catatan barang rusak?</h3>
+    <p class="modal-text">Catatan <strong>rusak ${r.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(r.namaBarang)} pada ${escapeHtml(r.tanggal)} akan dihapus dan stok barang dikembalikan. Tindakan ini tidak bisa dibatalkan.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-keluar" onclick="hapusRusak('${id}')">Ya, hapus</button>
+    </div>
+  `);
+};
+
+window.hapusRusak = async function(id){
+  const r = rusakList.find(x=>x.id===id);
+  if(!r) return;
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          tx.update(barangRef, { stok: data.stok + r.jumlah });
+        }
+        tx.delete(db.collection('kerusakan').doc(id));
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){ barang.stok = barang.stok + r.jumlah; }
+    rusakList = rusakList.filter(x=>x.id!==id);
+    await saveLocalBarang();
+    await saveLocalRusak();
+    renderAll();
+  }
+  closeModal();
+};
+
+// ---------- KELOLA USER ----------
+function renderKelolaUser(){
+  const el = $('usersTable');
+  if(!el) return;
+  if(!fbReady){
+    el.innerHTML = '<div class="empty">Kelola user hanya tersedia setelah aplikasi terhubung ke Firebase.</div>';
+    return;
+  }
+  if(!usersList.length){
+    el.innerHTML = '<div class="empty">Belum ada data pengguna, atau Anda tidak punya izin membacanya (periksa aturan keamanan Firestore).</div>';
+    return;
+  }
+  el.innerHTML = `<div class="table-scroll"><table><thead><tr>
+    <th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${usersList.map(u=>{
+      const isSelf = auth && auth.currentUser && auth.currentUser.uid===u.id;
+      const aktif = u.aktif !== false; // dokumen lama tanpa field 'aktif' dianggap aktif
+      return `<tr>
+        <td>${escapeHtml(u.nama||'-')}${isSelf?' <span class="mono" style="color:var(--text-dim)">(Anda)</span>':''}</td>
+        <td>${escapeHtml(u.email||'-')}</td>
+        <td><span class="tag ${u.role==='admin'?'masuk':'keluar'}">${u.role==='admin'?'Admin':'User'}</span></td>
+        <td><span class="tag ${aktif?'masuk':'keluar'}">${aktif?'Aktif':'Belum Aktif'}</span></td>
+        <td><div class="action-btns">
+          <button class="btn-ghost btn-sm" onclick="toggleUserAktifPrompt('${u.id}','${escapeHtml(u.email||'')}',${aktif})">${aktif?'Nonaktifkan':'Aktifkan'}</button>
+          <button class="btn-ghost btn-sm" onclick="toggleUserRolePrompt('${u.id}','${escapeHtml(u.email||'')}','${u.role}')">${u.role==='admin'?'Jadikan User':'Jadikan Admin'}</button>
+        </div></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
+}
+
+window.toggleUserAktifPrompt = function(uid, email, aktifSekarang){
+  const aktifBaru = !aktifSekarang;
+  const isSelf = auth && auth.currentUser && auth.currentUser.uid===uid;
+  openModal(`
+    <h3 class="modal-title">${aktifBaru?'Aktifkan':'Nonaktifkan'} pengguna?</h3>
+    <p class="modal-text">${escapeHtml(email)} akan ${aktifBaru?'diaktifkan sehingga bisa membaca dan mengisi data':'dinonaktifkan sehingga tidak bisa lagi membaca atau mengisi data'}.${isSelf?' Ini adalah akun Anda sendiri.':''}</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="ubahAktifUser('${uid}',${aktifBaru})">Ya, ${aktifBaru?'aktifkan':'nonaktifkan'}</button>
+    </div>
+  `);
+};
+
+window.ubahAktifUser = async function(uid, aktifBaru){
+  try{
+    await db.collection('users').doc(uid).update({ aktif: aktifBaru });
+    showToast('ok', aktifBaru?'Pengguna diaktifkan':'Pengguna dinonaktifkan', '');
+  }catch(e){
+    showMsg('msgUsers', 'Gagal mengubah status: '+e.message, false);
+  }
+  closeModal();
+};
+
+window.toggleUserRolePrompt = function(uid, email, currentRole){
+  const roleBaru = currentRole==='admin' ? 'user' : 'admin';
+  const isSelf = auth && auth.currentUser && auth.currentUser.uid===uid;
+  openModal(`
+    <h3 class="modal-title">Ubah role pengguna?</h3>
+    <p class="modal-text">${escapeHtml(email)} akan diubah dari <strong>${currentRole==='admin'?'Admin':'User'}</strong> menjadi <strong>${roleBaru==='admin'?'Admin':'User'}</strong>.${isSelf?' Ini adalah akun Anda sendiri - jika diubah ke User, Anda akan langsung kehilangan akses ke Pengaturan dan Kelola User.':''}</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="ubahRoleUser('${uid}','${roleBaru}')">Ya, ubah</button>
+    </div>
+  `);
+};
+
+window.ubahRoleUser = async function(uid, roleBaru){
+  try{
+    await db.collection('users').doc(uid).update({ role: roleBaru });
+  }catch(e){
+    showMsg('msgUsers', 'Gagal mengubah role: '+e.message, false);
+  }
+  closeModal();
+};
+
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+// ---------- BOOT ----------
+async function boot(){
+  // Baca konfigurasi lokal dulu (kalau pernah ada Firebase config tersimpan dari
+  // percobaan sebelumnya, itu jadi cadangan kalau FIREBASE_CONFIG_BAWAAN kosong).
+  let cfgLocal = {};
+  try{ const r = await localStore.get('inv:config'); cfgLocal = r ? JSON.parse(r.value) : {}; }catch(e){ cfgLocal = {}; }
+
+  sheetsUrl = (cfgLocal.sheetsUrl && cfgLocal.sheetsUrl.trim()) ? cfgLocal.sheetsUrl.trim() : (GOOGLE_SHEETS_URL_BAWAAN || '');
+
+  // Prioritaskan config Firebase yang di-hardcode di FIREBASE_CONFIG_BAWAAN (kalau diisi)
+  // supaya SEMUA orang yang membuka link ini langsung ke halaman login, bukan cuma
+  // perangkat yang dipakai admin. Menu Pengaturan sudah dihapus - untuk mengganti
+  // project Firebase, edit langsung nilai FIREBASE_CONFIG_BAWAAN di atas kode ini.
+  if(FIREBASE_CONFIG_BAWAAN && FIREBASE_CONFIG_BAWAAN.apiKey){
+    setStatus(false);
+    await initFirebase(FIREBASE_CONFIG_BAWAAN);
+    return;
+  }
+
+  if(cfgLocal.firebase && cfgLocal.firebase.apiKey){
+    setStatus(false);
+    await initFirebase(cfgLocal.firebase);
+  }else{
+    setStatus(false);
+    showApp();
+    await loadLocal();
+  }
+}
+boot();
+</script>
+</body>
+</html>
