@@ -376,9 +376,9 @@
 <div id="pendingScreen" class="login-wrap" style="display:none;">
   <div class="login-card">
     <div class="brand">
-      <div class="brand-mark">AGF</div>
+      <div class="brand-mark">GL</div>
       <div>
-        <h1 style="font-size:17px;">Amora Global Foods</h1>
+        <h1 style="font-size:17px;">Gudang Ledger</h1>
       </div>
     </div>
     <h2>Menunggu aktivasi</h2>
@@ -394,7 +394,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="brand-mark">AGF</div>
+      <div class="brand-mark">GL</div>
       <div>
         <h1>Gudang Ledger</h1>
         <p>Pencatatan barang keluar &amp; masuk</p>
@@ -656,7 +656,7 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
-  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+ apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
@@ -687,6 +687,8 @@ let riwayatFilter = 'semua'; // 'semua' | 'masuk' | 'keluar'
 let riwayatQuery = '';
 let riwayatDari = '';
 let riwayatSampai = '';
+let riwayatRentangHasil = null; // hasil query langsung ke Firestore saat filter tanggal aktif (supaya tidak terbatas 200 data terbaru)
+let riwayatSedangMuatRentang = false;
 let stokQuery = '';
 let expFilter = 'semua'; // 'semua' | 'expired' | 'soon' | 'safe' | 'none'
 let expQuery = '';
@@ -1912,7 +1914,8 @@ function renderDashboard(){
 }
 
 function getRiwayatFiltered(){
-  return transaksiList.filter(t=>{
+  const sumber = (riwayatRentangHasil !== null) ? riwayatRentangHasil : transaksiList;
+  return sumber.filter(t=>{
     if(riwayatFilter !== 'semua' && t.jenis !== riwayatFilter) return false;
     if(riwayatDari && (!t.tanggal || t.tanggal < riwayatDari)) return false;
     if(riwayatSampai && (!t.tanggal || t.tanggal > riwayatSampai)) return false;
@@ -1925,6 +1928,32 @@ function getRiwayatFiltered(){
   });
 }
 
+// Mengambil data transaksi langsung dari Firestore sesuai rentang tanggal yang dipilih,
+// supaya tidak terbatas pada 200 transaksi terbaru yang ada di listener real-time biasa.
+// Tanpa ini, transaksi lama (di luar 200 terbaru) tidak akan pernah muncul walau difilter tanggal.
+async function muatRiwayatRentangTanggal(){
+  if(!fbReady || !db){ riwayatRentangHasil = null; renderRiwayat(); return; }
+  if(!riwayatDari && !riwayatSampai){ riwayatRentangHasil = null; renderRiwayat(); return; }
+
+  riwayatSedangMuatRentang = true;
+  showMsgPending('msgRiwayat', 'Memuat data sesuai rentang tanggal...');
+  renderRiwayat();
+  try{
+    let q = db.collection('transaksi');
+    if(riwayatDari) q = q.where('tanggal', '>=', riwayatDari);
+    if(riwayatSampai) q = q.where('tanggal', '<=', riwayatSampai);
+    q = q.orderBy('tanggal', 'desc').limit(2000);
+    const snap = await q.get();
+    riwayatRentangHasil = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    $('msgRiwayat').className = 'msg';
+  }catch(e){
+    riwayatRentangHasil = [];
+    showMsg('msgRiwayat', 'Gagal memuat data rentang tanggal: '+e.message, false);
+  }
+  riwayatSedangMuatRentang = false;
+  renderRiwayat();
+}
+
 window.onRiwayatDateChange = function(){
   riwayatDari = $('riwayatDariTanggal').value || '';
   riwayatSampai = $('riwayatSampaiTanggal').value || '';
@@ -1932,12 +1961,13 @@ window.onRiwayatDateChange = function(){
     showMsg('msgRiwayat', 'Tanggal "Dari" tidak boleh setelah tanggal "s/d".', false);
   }
   $('dateFilterGroup').classList.toggle('active', !!(riwayatDari || riwayatSampai));
-  renderRiwayat();
+  muatRiwayatRentangTanggal();
 };
 
 window.resetRiwayatDate = function(){
   riwayatDari = '';
   riwayatSampai = '';
+  riwayatRentangHasil = null;
   $('riwayatDariTanggal').value = '';
   $('riwayatSampaiTanggal').value = '';
   $('dateFilterGroup').classList.remove('active');
@@ -1961,15 +1991,27 @@ function renderRiwayat(){
   const el = $('riwayatTable');
   const countEl = $('riwayatCount');
   if(!$('riwayatTable')) return;
-  if(!transaksiList.length){
+
+  if(riwayatSedangMuatRentang){
     if(countEl) countEl.textContent = '';
-    el.innerHTML = '<div class="empty">Belum ada transaksi.</div>';
+    el.innerHTML = '<div class="empty">Memuat data sesuai rentang tanggal...</div>';
+    return;
+  }
+
+  const adaFilterTanggal = !!(riwayatDari || riwayatSampai);
+  const sumber = (riwayatRentangHasil !== null) ? riwayatRentangHasil : transaksiList;
+
+  if(!sumber.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = adaFilterTanggal
+      ? '<div class="empty">Tidak ada transaksi pada rentang tanggal tersebut.</div>'
+      : '<div class="empty">Belum ada transaksi.</div>';
     return;
   }
   const list = getRiwayatFiltered();
   if(countEl){
-    const aktifFilter = riwayatQuery || riwayatFilter !== 'semua' || riwayatDari || riwayatSampai;
-    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${transaksiList.length} transaksi` : '';
+    const aktifFilter = riwayatQuery || riwayatFilter !== 'semua' || adaFilterTanggal;
+    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${sumber.length} transaksi` : '';
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada transaksi yang cocok dengan pencarian/filter.</div>'; return; }
   el.innerHTML = riwayatTableHtml(list);
