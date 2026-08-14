@@ -376,9 +376,9 @@
 <div id="pendingScreen" class="login-wrap" style="display:none;">
   <div class="login-card">
     <div class="brand">
-      <div class="brand-mark">GL</div>
+      <div class="brand-mark">AGF</div>
       <div>
-        <h1 style="font-size:17px;">Gudang Ledger</h1>
+        <h1 style="font-size:17px;">Amora Global Foods</h1>
       </div>
     </div>
     <h2>Menunggu aktivasi</h2>
@@ -394,7 +394,7 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="brand-mark">GL</div>
+      <div class="brand-mark">AGF</div>
       <div>
         <h1>Gudang Ledger</h1>
         <p>Pencatatan barang keluar &amp; masuk</p>
@@ -500,7 +500,7 @@
         </div>
         <div>
           <label>Tanggal</label>
-          <input type="date" id="fTanggal">
+          <input type="date" id="fTanggal" lang="id-ID">
         </div>
       </div>
       <label>Keterangan (opsional)</label>
@@ -616,13 +616,13 @@
           </div>
           <div>
             <label>Tanggal</label>
-            <input type="date" id="fRusakTanggal">
+            <input type="date" id="fRusakTanggal" lang="id-ID">
           </div>
         </div>
         <label>Keterangan / alasan rusak (opsional)</label>
         <textarea id="fRusakKeterangan" rows="2" placeholder="mis. kemasan penyok, basah kena air, jatuh saat bongkar"></textarea>
         <div style="margin-top:14px;">
-          <button class="btn-keluar" onclick="simpanRusak()">Simpan barang rusak</button>
+          <button id="btnSimpanRusak" class="btn-keluar" onclick="simpanRusak()">Simpan barang rusak</button>
         </div>
         <div id="msgRusak" class="msg"></div>
       </div>
@@ -656,7 +656,7 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
- apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
@@ -674,6 +674,7 @@ let rusakList = [];       // {id, kodeBarang, namaBarang, jumlah, keterangan, ta
 let usersList = [];       // {id(uid), email, role, createdAt}
 let currentUserRole = null; // 'admin' | 'user' | null (belum diketahui / mode lokal)
 let currentUserAktif = null; // true/false/null - null berarti belum diketahui
+let currentUserBarangDiizinkan = []; // array id barang yang boleh diakses user non-admin di Kartu Stok & form input
 let userRoleUnsub = null;
 let barangUnsub = null;
 let transaksiUnsub = null;
@@ -929,6 +930,7 @@ async function initFirebase(cfg){
         fbReady = false;
         currentUserRole = null;
         currentUserAktif = null;
+        currentUserBarangDiizinkan = [];
         if(userRoleUnsub){ userRoleUnsub(); userRoleUnsub = null; }
         if(barangUnsub){ barangUnsub(); barangUnsub = null; }
         if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
@@ -998,15 +1000,25 @@ function attachUserStatusListener(uid){
     const data = doc.exists ? doc.data() : {};
     currentUserRole = data.role || 'user';
     currentUserAktif = data.aktif !== false; // dokumen lama tanpa field 'aktif' dianggap aktif (kompatibel ke belakang)
+    currentUserBarangDiizinkan = Array.isArray(data.barangDiizinkan) ? data.barangDiizinkan : [];
     setStatus(true);
     if(currentUserAktif){
       showApp();
       if(!barangUnsub){ attachFirestoreListeners(); } // hindari pasang listener dobel kalau sudah aktif sebelumnya
+      else{ renderStockGrid(); renderBarangSelect(); renderDashboard(); renderExpProduk(); } // izin akses barang mungkin baru saja berubah - refresh tampilan yang bergantung padanya
     }else{
       showPending();
     }
     applyRoleUI();
-  }, ()=>{ currentUserRole = 'user'; currentUserAktif = true; showApp(); applyRoleUI(); });
+  }, ()=>{ currentUserRole = 'user'; currentUserAktif = true; currentUserBarangDiizinkan = []; showApp(); applyRoleUI(); });
+}
+
+// true kalau user saat ini (admin, atau user biasa yang diizinkan) boleh melihat/memakai barang tsb
+// di Kartu Stok dan form input transaksi/barang rusak. Admin selalu boleh akses semua barang.
+function bolehAksesBarang(barangId){
+  if(!fbReady) return true; // mode lokal/demo tidak mengenal konsep multi-user
+  if(currentUserRole === 'admin') return true;
+  return currentUserBarangDiizinkan.includes(barangId);
 }
 
 // Menampilkan/menyembunyikan tab Pengaturan & Kelola User sesuai role, dan
@@ -1300,8 +1312,8 @@ window.handleImportFile = async function(ev){
 window.eksporRiwayatCSV = function(){
   const list = getRiwayatFiltered();
   if(!list.length){ showMsg('msgRiwayat','Tidak ada transaksi untuk diekspor.', false); return; }
-  const rows = [['tanggal','jenis','kode','nama','jumlah','stokSetelah','keterangan']];
-  list.forEach(t=> rows.push([t.tanggal, t.jenis, t.kodeBarang, t.namaBarang, t.jumlah, t.stokSetelah, t.keterangan||'']));
+  const rows = [['tanggal','jenis','kode','nama','jumlah','stokSetelah','keterangan','user']];
+  list.forEach(t=> rows.push([t.tanggal, t.jenis, t.kodeBarang, t.namaBarang, t.jumlah, t.stokSetelah, t.keterangan||'', t.oleh||'']));
   const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1522,7 +1534,11 @@ window.hapusBarang = async function(id){
 };
 
 // ---------- CRUD: TRANSAKSI ----------
+let sedangSimpanTransaksi = false; // mencegah data dobel kalau tombol simpan transaksi di-klik berkali-kali
+
 window.simpanTransaksi = async function(){
+  if(sedangSimpanTransaksi) return; // abaikan klik tambahan selagi proses simpan sebelumnya masih berjalan
+
   const barangId = $('fBarangSelect').value;
   const jumlah = parseInt($('fJumlah').value || '0', 10);
   const tanggal = $('fTanggal').value || todayStr();
@@ -1533,49 +1549,63 @@ window.simpanTransaksi = async function(){
 
   const barang = barangList.find(b=>b.id===barangId);
   if(!barang){ showMsg('msgTransaksi','Barang tidak ditemukan.', false); return; }
+  if(!bolehAksesBarang(barangId)){ showMsg('msgTransaksi','Anda tidak memiliki akses ke barang ini. Hubungi admin.', false); return; }
 
   let stokBaru = jenisAktif==='masuk' ? barang.stok + jumlah : barang.stok - jumlah;
   if(stokBaru < 0){ showMsg('msgTransaksi','Stok tidak cukup untuk transaksi keluar ini.', false); return; }
 
-  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jenis: jenisAktif, jumlah, stokSetelah: stokBaru, keterangan, tanggal };
+  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jenis: jenisAktif, jumlah, stokSetelah: stokBaru, keterangan, tanggal, oleh };
 
-  if(fbReady){
-    try{
-      const barangRef = db.collection('barang').doc(barangId);
-      await db.runTransaction(async (tx)=>{
-        const snap = await tx.get(barangRef);
-        if(!snap.exists) throw new Error('Barang sudah tidak ada.');
-        const data = snap.data();
-        const sBaru = jenisAktif==='masuk' ? data.stok + jumlah : data.stok - jumlah;
-        if(sBaru < 0) throw new Error('Stok tidak cukup.');
-        tx.update(barangRef, { stok: sBaru });
-        const tRef = db.collection('transaksi').doc();
-        tx.set(tRef, { ...catatan, stokSetelah: sBaru, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      });
-    }catch(e){
-      showMsg('msgTransaksi', e.message, false); return;
+  sedangSimpanTransaksi = true;
+  const btnSimpan = $('btnSimpanTransaksi');
+  const teksAsliBtn = btnSimpan.textContent;
+  btnSimpan.disabled = true;
+  btnSimpan.textContent = 'Menyimpan...';
+
+  try{
+    if(fbReady){
+      try{
+        const barangRef = db.collection('barang').doc(barangId);
+        await db.runTransaction(async (tx)=>{
+          const snap = await tx.get(barangRef);
+          if(!snap.exists) throw new Error('Barang sudah tidak ada.');
+          const data = snap.data();
+          const sBaru = jenisAktif==='masuk' ? data.stok + jumlah : data.stok - jumlah;
+          if(sBaru < 0) throw new Error('Stok tidak cukup.');
+          tx.update(barangRef, { stok: sBaru });
+          const tRef = db.collection('transaksi').doc();
+          tx.set(tRef, { ...catatan, stokSetelah: sBaru, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        });
+      }catch(e){
+        showMsg('msgTransaksi', e.message, false); return;
+      }
+    }else{
+      barang.stok = stokBaru;
+      catatan.id = 'loc_'+Date.now();
+      catatan.createdAt = Date.now();
+      transaksiList.unshift(catatan);
+      await saveLocalBarang();
+      await saveLocalTransaksi();
+      renderAll();
     }
-  }else{
-    barang.stok = stokBaru;
-    catatan.id = 'loc_'+Date.now();
-    catatan.createdAt = Date.now();
-    transaksiList.unshift(catatan);
-    await saveLocalBarang();
-    await saveLocalTransaksi();
-    renderAll();
-  }
 
-  syncToSheets({
-    sheet: jenisAktif==='masuk' ? 'masuk' : 'keluar',
-    tanggal: catatan.tanggal, jenis: catatan.jenis, kode: catatan.kodeBarang,
-    nama: catatan.namaBarang, jumlah: catatan.jumlah, stokSetelah: catatan.stokSetelah,
-    keterangan: catatan.keterangan || ''
-  });
-  $('fBarangSelect').value = '';
-  $('fBarangSearch').value = '';
-  $('fJumlah').value = 0;
-  $('fKeterangan').value = '';
-  showMsg('msgTransaksi','Transaksi tersimpan.', true);
+    syncToSheets({
+      sheet: jenisAktif==='masuk' ? 'masuk' : 'keluar',
+      tanggal: catatan.tanggal, jenis: catatan.jenis, kode: catatan.kodeBarang,
+      nama: catatan.namaBarang, jumlah: catatan.jumlah, stokSetelah: catatan.stokSetelah,
+      keterangan: catatan.keterangan || ''
+    });
+    $('fBarangSelect').value = '';
+    $('fBarangSearch').value = '';
+    $('fJumlah').value = 0;
+    $('fKeterangan').value = '';
+    showMsg('msgTransaksi','Transaksi tersimpan.', true);
+  }finally{
+    sedangSimpanTransaksi = false;
+    btnSimpan.disabled = false;
+    btnSimpan.textContent = teksAsliBtn;
+  }
 };
 
 // ---------- MODAL ----------
@@ -1601,7 +1631,7 @@ window.editTransaksiPrompt = function(id){
     </div>
     <div class="row">
       <div><label>Jumlah</label><input type="number" id="modalJumlah" min="1" value="${t.jumlah}"></div>
-      <div><label>Tanggal</label><input type="date" id="modalTanggal" value="${escapeHtml(t.tanggal)}"></div>
+      <div><label>Tanggal</label><input type="date" id="modalTanggal" lang="id-ID" value="${escapeHtml(t.tanggal)}"></div>
     </div>
     <label>Keterangan</label>
     <textarea id="modalKeterangan" rows="2">${escapeHtml(t.keterangan||'')}</textarea>
@@ -1670,7 +1700,7 @@ window.hapusTransaksiPrompt = function(id){
   const barang = barangList.find(b=>b.kode===t.kodeBarang);
   openModal(`
     <h3 class="modal-title">Hapus transaksi?</h3>
-    <p class="modal-text">Transaksi <strong>${t.jenis==='masuk'?'masuk':'keluar'} ${t.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(t.namaBarang)} pada ${escapeHtml(t.tanggal)} akan dihapus dan stok barang disesuaikan kembali. Tindakan ini tidak bisa dibatalkan.</p>
+    <p class="modal-text">Transaksi <strong>${t.jenis==='masuk'?'masuk':'keluar'} ${t.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(t.namaBarang)} pada ${escapeHtml(formatTanggalDMY(t.tanggal))} akan dihapus dan stok barang disesuaikan kembali. Tindakan ini tidak bisa dibatalkan.</p>
     <div id="msgModal" class="msg"></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">Batal</button>
@@ -1782,18 +1812,25 @@ function renderAll(){
 function renderStockGrid(){
   const el = $('stockGrid');
   const countEl = $('stokCount');
+  const barangBisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+
   if(!barangList.length){
     if(countEl) countEl.textContent = '';
     el.innerHTML = '<div class="empty">Belum ada barang. Tambahkan di panel sebelah kanan.</div>';
     return;
   }
+  if(!barangBisaDiakses.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = '<div class="empty">Belum ada barang yang diizinkan admin untuk Anda akses. Hubungi admin untuk mengatur akses lewat menu Kelola User.</div>';
+    return;
+  }
   const q = stokQuery.toLowerCase();
   const list = q
-    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
-    : barangList;
+    ? barangBisaDiakses.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : barangBisaDiakses;
 
   if(countEl){
-    countEl.textContent = q ? `Menampilkan ${list.length} dari ${barangList.length} barang` : '';
+    countEl.textContent = q ? `Menampilkan ${list.length} dari ${barangBisaDiakses.length} barang` : '';
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian.</div>'; return; }
 
@@ -1839,12 +1876,15 @@ function renderBarangSelect(){
 function renderBarangSearchList(filterText){
   const list = $('barangSearchList');
   const q = (filterText||'').trim().toLowerCase();
+  const bisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
   const filtered = q
-    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
-    : barangList;
+    ? bisaDiakses.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : bisaDiakses;
   barangSearchHighlight = filtered.length ? 0 : -1;
   if(!filtered.length){
-    list.innerHTML = '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>';
+    list.innerHTML = bisaDiakses.length
+      ? '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>'
+      : '<div class="searchable-select-empty">Belum ada barang yang diizinkan admin untuk Anda. Hubungi admin.</div>';
   }else{
     list.innerHTML = filtered.map((b,i)=>`<div class="searchable-select-item${i===0?' hi':''}" data-id="${b.id}" onclick="pilihBarangSearch('${b.id}')"><span class="ss-kode">${escapeHtml(b.kode)}</span> - ${escapeHtml(b.nama)} <span style="color:var(--text-dim)">(stok: ${b.stok})</span></div>`).join('');
   }
@@ -1901,21 +1941,38 @@ document.addEventListener('click', (ev)=>{
 });
 
 function renderDashboard(){
-  $('statTotalBarang').textContent = barangList.length;
+  const barangBisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+  const kodeBisaDiakses = new Set(barangBisaDiakses.map(b=>b.kode));
+
+  $('statTotalBarang').textContent = barangBisaDiakses.length;
   const today = todayStr();
-  const todays = transaksiList.filter(t=>t.tanggal===today);
+  const todays = transaksiList.filter(t=>t.tanggal===today && kodeBisaDiakses.has(t.kodeBarang));
   $('statMasukHariIni').textContent = todays.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+t.jumlah,0);
   $('statKeluarHariIni').textContent = todays.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+t.jumlah,0);
 
   const el = $('dashRiwayat');
-  const recent = transaksiList.slice(0,6);
+  const recent = transaksiList.filter(t=>kodeBisaDiakses.has(t.kodeBarang)).slice(0,6);
   if(!recent.length){ el.innerHTML = '<div class="empty">Belum ada transaksi.</div>'; return; }
   el.innerHTML = riwayatTableHtml(recent);
 }
 
+// true kalau user saat ini boleh melihat riwayat transaksi milik SEMUA orang.
+// Admin dan mode lokal/demo selalu lihat semua; user biasa hanya lihat input miliknya sendiri.
+function bisaLihatSemuaRiwayat(){
+  if(!fbReady) return true;
+  return currentUserRole === 'admin';
+}
+
+function identitasUserSaatIni(){
+  return (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+}
+
 function getRiwayatFiltered(){
   const sumber = (riwayatRentangHasil !== null) ? riwayatRentangHasil : transaksiList;
+  const lihatSemua = bisaLihatSemuaRiwayat();
+  const identitas = identitasUserSaatIni();
   return sumber.filter(t=>{
+    if(!lihatSemua && t.oleh !== identitas) return false;
     if(riwayatFilter !== 'semua' && t.jenis !== riwayatFilter) return false;
     if(riwayatDari && (!t.tanggal || t.tanggal < riwayatDari)) return false;
     if(riwayatSampai && (!t.tanggal || t.tanggal > riwayatSampai)) return false;
@@ -1936,7 +1993,6 @@ async function muatRiwayatRentangTanggal(){
   if(!riwayatDari && !riwayatSampai){ riwayatRentangHasil = null; renderRiwayat(); return; }
 
   riwayatSedangMuatRentang = true;
-  showMsgPending('msgRiwayat', 'Memuat data sesuai rentang tanggal...');
   renderRiwayat();
   try{
     let q = db.collection('transaksi');
@@ -1945,7 +2001,6 @@ async function muatRiwayatRentangTanggal(){
     q = q.orderBy('tanggal', 'desc').limit(2000);
     const snap = await q.get();
     riwayatRentangHasil = snap.docs.map(d=>({ id:d.id, ...d.data() }));
-    $('msgRiwayat').className = 'msg';
   }catch(e){
     riwayatRentangHasil = [];
     showMsg('msgRiwayat', 'Gagal memuat data rentang tanggal: '+e.message, false);
@@ -2000,34 +2055,58 @@ function renderRiwayat(){
 
   const adaFilterTanggal = !!(riwayatDari || riwayatSampai);
   const sumber = (riwayatRentangHasil !== null) ? riwayatRentangHasil : transaksiList;
+  const lihatSemua = bisaLihatSemuaRiwayat();
+  const identitas = identitasUserSaatIni();
+  const sumberMilikSaya = lihatSemua ? sumber : sumber.filter(t=>t.oleh===identitas);
 
-  if(!sumber.length){
+  if(!sumberMilikSaya.length){
     if(countEl) countEl.textContent = '';
     el.innerHTML = adaFilterTanggal
       ? '<div class="empty">Tidak ada transaksi pada rentang tanggal tersebut.</div>'
-      : '<div class="empty">Belum ada transaksi.</div>';
+      : (lihatSemua ? '<div class="empty">Belum ada transaksi.</div>' : '<div class="empty">Anda belum pernah menginput transaksi apa pun.</div>');
     return;
   }
   const list = getRiwayatFiltered();
   if(countEl){
     const aktifFilter = riwayatQuery || riwayatFilter !== 'semua' || adaFilterTanggal;
-    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${sumber.length} transaksi` : '';
+    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${sumberMilikSaya.length} transaksi` : '';
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada transaksi yang cocok dengan pencarian/filter.</div>'; return; }
   el.innerHTML = riwayatTableHtml(list);
 }
 
+const NAMA_HARI = ['Minggu','Senin','Selasa','Rabu','Kamis',"Jum'at",'Sabtu'];
+function namaHariDariTanggal(tgl){
+  if(!tgl) return '';
+  const d = new Date(tgl+'T00:00:00');
+  if(isNaN(d.getTime())) return '';
+  return NAMA_HARI[d.getDay()];
+}
+function formatTanggalDMY(tgl){
+  if(!tgl) return '';
+  const parts = tgl.split('-'); // input asli format YYYY-MM-DD
+  if(parts.length !== 3) return tgl;
+  const [y, m, d] = parts;
+  return `${d}-${m}-${y}`;
+}
+function tampilkanTanggalHari(tgl){
+  if(!tgl) return '';
+  const hari = namaHariDariTanggal(tgl);
+  return `${hari ? hari+', ' : ''}${formatTanggalDMY(tgl)}`;
+}
+
 function riwayatTableHtml(list){
   return `<div class="table-scroll"><table><thead><tr>
-    <th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Jumlah</th><th>Stok setelah</th><th>Keterangan</th><th>Aksi</th>
+    <th>Tanggal</th><th>Jenis</th><th>Barang</th><th>Jumlah</th><th>Stok setelah</th><th>Keterangan</th><th>User</th><th>Aksi</th>
   </tr></thead><tbody>
     ${list.map(t=>`<tr>
-      <td class="mono">${escapeHtml(t.tanggal||'')}</td>
+      <td class="mono">${escapeHtml(tampilkanTanggalHari(t.tanggal))}</td>
       <td><span class="tag ${t.jenis}">${t.jenis==='masuk'?'Masuk':'Keluar'}</span></td>
       <td>${escapeHtml(t.namaBarang||'')} <span class="mono" style="color:var(--text-dim)">(${escapeHtml(t.kodeBarang||'')})</span></td>
       <td class="mono">${t.jenis==='masuk'?'+':'-'}${t.jumlah}</td>
       <td class="mono">${t.stokSetelah}</td>
       <td>${escapeHtml(t.keterangan||' - ')}</td>
+      <td>${escapeHtml(t.oleh||'-')}</td>
       <td><div class="action-btns">
         <button class="icon-btn" title="Edit" onclick="editTransaksiPrompt('${t.id}')">✎</button>
         <button class="icon-btn danger" title="Hapus" onclick="hapusTransaksiPrompt('${t.id}')">🗑</button>
@@ -2049,6 +2128,7 @@ function getExpStatus(tglExp){
 
 function getExpFiltered(){
   return barangList.filter(b=>{
+    if(!bolehAksesBarang(b.id)) return false;
     const st = getExpStatus(b.tglExp).status;
     if(expFilter !== 'semua' && st !== expFilter) return false;
     if(expQuery){
@@ -2080,9 +2160,11 @@ function renderExpProduk(){
   const countEl = $('expCount');
   if(!el) return;
 
-  const expiredCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='expired').length;
-  const soonCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='soon').length;
-  const safeCount = barangList.filter(b=>getExpStatus(b.tglExp).status==='safe').length;
+  const barangBisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+
+  const expiredCount = barangBisaDiakses.filter(b=>getExpStatus(b.tglExp).status==='expired').length;
+  const soonCount = barangBisaDiakses.filter(b=>getExpStatus(b.tglExp).status==='soon').length;
+  const safeCount = barangBisaDiakses.filter(b=>getExpStatus(b.tglExp).status==='safe').length;
   $('statExpExpired').textContent = expiredCount;
   $('statExpSoon').textContent = soonCount;
   $('statExpSafe').textContent = safeCount;
@@ -2092,11 +2174,16 @@ function renderExpProduk(){
     el.innerHTML = '<div class="empty">Belum ada barang. Tambahkan barang dulu di menu Barang.</div>';
     return;
   }
+  if(!barangBisaDiakses.length){
+    if(countEl) countEl.textContent = '';
+    el.innerHTML = '<div class="empty">Belum ada barang yang diizinkan admin untuk Anda akses. Hubungi admin untuk mengatur akses lewat menu Kelola User.</div>';
+    return;
+  }
 
   const list = getExpFiltered();
   const aktifFilter = expQuery || expFilter !== 'semua';
   if(countEl){
-    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${barangList.length} barang` : '';
+    countEl.textContent = aktifFilter ? `Menampilkan ${list.length} dari ${barangBisaDiakses.length} barang` : '';
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian/filter.</div>'; return; }
 
@@ -2138,8 +2225,8 @@ window.onRusakSearch = function(ev){
 window.eksporRusakCSV = function(){
   const list = getRusakFiltered();
   if(!list.length){ showMsg('msgRusak','Tidak ada catatan barang rusak untuk diekspor.', false); return; }
-  const rows = [['tanggal','kode','nama','jumlah','keterangan']];
-  list.forEach(r=> rows.push([r.tanggal, r.kodeBarang, r.namaBarang, r.jumlah, r.keterangan||'']));
+  const rows = [['tanggal','kode','nama','jumlah','keterangan','user']];
+  list.forEach(r=> rows.push([r.tanggal, r.kodeBarang, r.namaBarang, r.jumlah, r.keterangan||'', r.oleh||'']));
   const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -2155,13 +2242,14 @@ window.eksporRusakCSV = function(){
 
 function rusakTableHtml(list){
   return `<div class="table-scroll"><table><thead><tr>
-    <th>Tanggal</th><th>Barang</th><th>Jumlah Rusak</th><th>Keterangan</th><th>Aksi</th>
+    <th>Tanggal</th><th>Barang</th><th>Jumlah Rusak</th><th>Keterangan</th><th>User</th><th>Aksi</th>
   </tr></thead><tbody>
     ${list.map(r=>`<tr>
-      <td class="mono">${escapeHtml(r.tanggal||'')}</td>
+      <td class="mono">${escapeHtml(tampilkanTanggalHari(r.tanggal))}</td>
       <td>${escapeHtml(r.namaBarang||'')} <span class="mono" style="color:var(--text-dim)">(${escapeHtml(r.kodeBarang||'')})</span></td>
       <td class="mono">-${r.jumlah}</td>
       <td>${escapeHtml(r.keterangan||' - ')}</td>
+      <td>${escapeHtml(r.oleh||'-')}</td>
       <td><div class="action-btns">
         <button class="icon-btn" title="Edit" onclick="editRusakPrompt('${r.id}')">✎</button>
         <button class="icon-btn danger" title="Hapus" onclick="hapusRusakPrompt('${r.id}')">🗑</button>
@@ -2205,12 +2293,15 @@ function labelBarangRusak(b){
 function renderRusakBarangSearchList(filterText){
   const list = $('rusakBarangSearchList');
   const q = (filterText||'').trim().toLowerCase();
+  const bisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
   const filtered = q
-    ? barangList.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
-    : barangList;
+    ? bisaDiakses.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : bisaDiakses;
   rusakBarangSearchHighlight = filtered.length ? 0 : -1;
   if(!filtered.length){
-    list.innerHTML = '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>';
+    list.innerHTML = bisaDiakses.length
+      ? '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>'
+      : '<div class="searchable-select-empty">Belum ada barang yang diizinkan admin untuk Anda. Hubungi admin.</div>';
   }else{
     list.innerHTML = filtered.map((b,i)=>`<div class="searchable-select-item${i===0?' hi':''}" data-id="${b.id}" onclick="pilihRusakBarangSearch('${b.id}')"><span class="ss-kode">${escapeHtml(b.kode)}</span> - ${escapeHtml(b.nama)} <span style="color:var(--text-dim)">(stok: ${b.stok})</span></div>`).join('');
   }
@@ -2266,7 +2357,11 @@ document.addEventListener('click', (ev)=>{
   }
 });
 
+let sedangSimpanRusak = false; // mencegah data dobel kalau tombol simpan barang rusak di-klik berkali-kali
+
 window.simpanRusak = async function(){
+  if(sedangSimpanRusak) return;
+
   const barangId = $('fRusakBarangSelect').value;
   const jumlah = parseInt($('fRusakJumlah').value || '0', 10);
   const tanggal = $('fRusakTanggal').value || todayStr();
@@ -2277,43 +2372,57 @@ window.simpanRusak = async function(){
 
   const barang = barangList.find(b=>b.id===barangId);
   if(!barang){ showMsg('msgRusak','Barang tidak ditemukan.', false); return; }
+  if(!bolehAksesBarang(barangId)){ showMsg('msgRusak','Anda tidak memiliki akses ke barang ini. Hubungi admin.', false); return; }
 
   const stokBaru = barang.stok - jumlah;
   if(stokBaru < 0){ showMsg('msgRusak','Stok tidak cukup - jumlah rusak melebihi stok yang ada.', false); return; }
 
-  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal };
+  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal, oleh };
 
-  if(fbReady){
-    try{
-      const barangRef = db.collection('barang').doc(barangId);
-      await db.runTransaction(async (tx)=>{
-        const snap = await tx.get(barangRef);
-        if(!snap.exists) throw new Error('Barang sudah tidak ada.');
-        const data = snap.data();
-        const sBaru = data.stok - jumlah;
-        if(sBaru < 0) throw new Error('Stok tidak cukup.');
-        tx.update(barangRef, { stok: sBaru });
-        const rRef = db.collection('kerusakan').doc();
-        tx.set(rRef, { ...catatan, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
-      });
-    }catch(e){
-      showMsg('msgRusak', e.message, false); return;
+  sedangSimpanRusak = true;
+  const btnSimpanRusak = $('btnSimpanRusak');
+  const teksAsliBtnRusak = btnSimpanRusak.textContent;
+  btnSimpanRusak.disabled = true;
+  btnSimpanRusak.textContent = 'Menyimpan...';
+
+  try{
+    if(fbReady){
+      try{
+        const barangRef = db.collection('barang').doc(barangId);
+        await db.runTransaction(async (tx)=>{
+          const snap = await tx.get(barangRef);
+          if(!snap.exists) throw new Error('Barang sudah tidak ada.');
+          const data = snap.data();
+          const sBaru = data.stok - jumlah;
+          if(sBaru < 0) throw new Error('Stok tidak cukup.');
+          tx.update(barangRef, { stok: sBaru });
+          const rRef = db.collection('kerusakan').doc();
+          tx.set(rRef, { ...catatan, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        });
+      }catch(e){
+        showMsg('msgRusak', e.message, false); return;
+      }
+    }else{
+      barang.stok = stokBaru;
+      catatan.id = 'loc_'+Date.now();
+      catatan.createdAt = Date.now();
+      rusakList.unshift(catatan);
+      await saveLocalBarang();
+      await saveLocalRusak();
+      renderAll();
     }
-  }else{
-    barang.stok = stokBaru;
-    catatan.id = 'loc_'+Date.now();
-    catatan.createdAt = Date.now();
-    rusakList.unshift(catatan);
-    await saveLocalBarang();
-    await saveLocalRusak();
-    renderAll();
-  }
 
-  $('fRusakBarangSelect').value = '';
-  $('fRusakBarangSearch').value = '';
-  $('fRusakJumlah').value = 1;
-  $('fRusakKeterangan').value = '';
-  showMsg('msgRusak','Barang rusak tercatat.', true);
+    $('fRusakBarangSelect').value = '';
+    $('fRusakBarangSearch').value = '';
+    $('fRusakJumlah').value = 1;
+    $('fRusakKeterangan').value = '';
+    showMsg('msgRusak','Barang rusak tercatat.', true);
+  }finally{
+    sedangSimpanRusak = false;
+    btnSimpanRusak.disabled = false;
+    btnSimpanRusak.textContent = teksAsliBtnRusak;
+  }
 };
 
 window.editRusakPrompt = function(id){
@@ -2324,7 +2433,7 @@ window.editRusakPrompt = function(id){
     <p class="modal-text">${escapeHtml(r.namaBarang)} <span class="mono">(${escapeHtml(r.kodeBarang)})</span></p>
     <div class="row">
       <div><label>Jumlah rusak</label><input type="number" id="modalRusakJumlah" min="1" value="${r.jumlah}"></div>
-      <div><label>Tanggal</label><input type="date" id="modalRusakTanggal" value="${escapeHtml(r.tanggal)}"></div>
+      <div><label>Tanggal</label><input type="date" id="modalRusakTanggal" lang="id-ID" value="${escapeHtml(r.tanggal)}"></div>
     </div>
     <label>Keterangan</label>
     <textarea id="modalRusakKeterangan" rows="2">${escapeHtml(r.keterangan||'')}</textarea>
@@ -2384,7 +2493,7 @@ window.hapusRusakPrompt = function(id){
   const barang = barangList.find(b=>b.kode===r.kodeBarang);
   openModal(`
     <h3 class="modal-title">Hapus catatan barang rusak?</h3>
-    <p class="modal-text">Catatan <strong>rusak ${r.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(r.namaBarang)} pada ${escapeHtml(r.tanggal)} akan dihapus dan stok barang dikembalikan. Tindakan ini tidak bisa dibatalkan.</p>
+    <p class="modal-text">Catatan <strong>rusak ${r.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(r.namaBarang)} pada ${escapeHtml(formatTanggalDMY(r.tanggal))} akan dihapus dan stok barang dikembalikan. Tindakan ini tidak bisa dibatalkan.</p>
     <div id="msgModal" class="msg"></div>
     <div class="modal-actions">
       <button class="btn-ghost" onclick="closeModal()">Batal</button>
@@ -2433,19 +2542,22 @@ function renderKelolaUser(){
     return;
   }
   el.innerHTML = `<div class="table-scroll"><table><thead><tr>
-    <th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Aksi</th>
+    <th>Nama</th><th>Email</th><th>Role</th><th>Status</th><th>Akses Barang</th><th>Aksi</th>
   </tr></thead><tbody>
     ${usersList.map(u=>{
       const isSelf = auth && auth.currentUser && auth.currentUser.uid===u.id;
       const aktif = u.aktif !== false; // dokumen lama tanpa field 'aktif' dianggap aktif
+      const jumlahAkses = Array.isArray(u.barangDiizinkan) ? u.barangDiizinkan.length : 0;
       return `<tr>
         <td>${escapeHtml(u.nama||'-')}${isSelf?' <span class="mono" style="color:var(--text-dim)">(Anda)</span>':''}</td>
         <td>${escapeHtml(u.email||'-')}</td>
         <td><span class="tag ${u.role==='admin'?'masuk':'keluar'}">${u.role==='admin'?'Admin':'User'}</span></td>
         <td><span class="tag ${aktif?'masuk':'keluar'}">${aktif?'Aktif':'Belum Aktif'}</span></td>
+        <td>${u.role==='admin' ? '<span class="mono" style="color:var(--text-dim)">Semua barang</span>' : `<span class="mono" style="color:var(--text-dim)">${jumlahAkses} barang</span>`}</td>
         <td><div class="action-btns">
           <button class="btn-ghost btn-sm" onclick="toggleUserAktifPrompt('${u.id}','${escapeHtml(u.email||'')}',${aktif})">${aktif?'Nonaktifkan':'Aktifkan'}</button>
           <button class="btn-ghost btn-sm" onclick="toggleUserRolePrompt('${u.id}','${escapeHtml(u.email||'')}','${u.role}')">${u.role==='admin'?'Jadikan User':'Jadikan Admin'}</button>
+          ${u.role!=='admin' ? `<button class="btn-ghost btn-sm" onclick="aturAksesBarangPrompt('${u.id}','${escapeHtml(u.email||'')}')">Atur Akses Barang</button>` : ''}
         </div></td>
       </tr>`;
     }).join('')}
@@ -2495,6 +2607,68 @@ window.ubahRoleUser = async function(uid, roleBaru){
     await db.collection('users').doc(uid).update({ role: roleBaru });
   }catch(e){
     showMsg('msgUsers', 'Gagal mengubah role: '+e.message, false);
+  }
+  closeModal();
+};
+
+window.aturAksesBarangPrompt = function(uid, email){
+  const u = usersList.find(x=>x.id===uid);
+  const izinSekarang = new Set(Array.isArray(u && u.barangDiizinkan) ? u.barangDiizinkan : []);
+  const daftarBarang = barangList;
+
+  const baris = daftarBarang.map(b=>`
+    <label class="akses-barang-row" data-cari="${escapeHtml((b.kode+' '+b.nama).toLowerCase())}" style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px solid var(--line);font-size:13px;">
+      <input type="checkbox" value="${b.id}" ${izinSekarang.has(b.id)?'checked':''}>
+      <span class="mono" style="color:var(--text-dim);font-size:11px;">${escapeHtml(b.kode)}</span>
+      <span>${escapeHtml(b.nama)}</span>
+    </label>
+  `).join('');
+
+  openModal(`
+    <h3 class="modal-title">Atur akses kartu stok</h3>
+    <p class="modal-text"><strong>${escapeHtml(email)}</strong> hanya bisa melihat &amp; input barang yang dicentang di menu Kartu Stok, Catat Transaksi, dan Catat Barang Rusak. Barang yang tidak dicentang tidak akan muncul sama sekali untuk user ini.</p>
+    ${daftarBarang.length ? `
+    <input type="text" placeholder="Cari barang..." oninput="filterAksesBarangList(event)">
+    <div style="display:flex;gap:8px;margin:8px 0;">
+      <button type="button" class="btn-ghost btn-sm" onclick="setSemuaAksesBarang(true)">Pilih Semua</button>
+      <button type="button" class="btn-ghost btn-sm" onclick="setSemuaAksesBarang(false)">Kosongkan Semua</button>
+    </div>
+    <div id="aksesBarangList" style="max-height:260px;overflow-y:auto;border:1px solid var(--line);border-radius:7px;padding:4px 8px;">
+      ${baris}
+    </div>
+    ` : '<p class="modal-text">Belum ada barang di master data - tambahkan dulu di menu Barang.</p>'}
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanAksesBarang('${uid}')">Simpan akses</button>
+    </div>
+  `);
+};
+
+window.filterAksesBarangList = function(ev){
+  const q = ev.target.value.trim().toLowerCase();
+  document.querySelectorAll('#aksesBarangList .akses-barang-row').forEach(row=>{
+    row.style.display = (!q || row.dataset.cari.includes(q)) ? 'flex' : 'none';
+  });
+};
+
+window.setSemuaAksesBarang = function(nilai){
+  document.querySelectorAll('#aksesBarangList .akses-barang-row').forEach(row=>{
+    if(row.style.display !== 'none'){
+      const cb = row.querySelector('input[type=checkbox]');
+      if(cb) cb.checked = nilai;
+    }
+  });
+};
+
+window.simpanAksesBarang = async function(uid){
+  const idTerpilih = Array.from(document.querySelectorAll('#aksesBarangList input[type=checkbox]:checked')).map(cb=>cb.value);
+  try{
+    await db.collection('users').doc(uid).update({ barangDiizinkan: idTerpilih });
+    showToast('ok', 'Akses barang diperbarui', `${idTerpilih.length} barang diizinkan untuk user ini.`);
+  }catch(e){
+    showMsg('msgModal', 'Gagal menyimpan akses: '+e.message, false);
+    return;
   }
   closeModal();
 };
