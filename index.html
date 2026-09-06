@@ -43,7 +43,7 @@
   body[data-theme="light"] .msg.pending{border-color:#C9A227;}
   body[data-theme="light"] .status-dot{background:#9AA4B2;}
   .theme-toggle{
-    position:fixed;top:16px;left:16px;z-index:60;
+    position:fixed;top:16px;right:16px;z-index:60;
     background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);
     width:38px;height:38px;border-radius:8px;font-size:16px;
     display:inline-flex;align-items:center;justify-content:center;padding:0;
@@ -59,7 +59,74 @@
     min-height:100vh;
     transition:background-color .2s ease, color .2s ease;
   }
-  .app{max-width:1080px;margin:0 auto;padding:20px 20px 60px;}
+  .app{max-width:1240px;margin:0 auto;padding:0;display:flex;align-items:flex-start;min-height:100vh;}
+
+  /* sidebar */
+  .sidebar{
+    width:230px;flex:0 0 230px;position:sticky;top:0;align-self:flex-start;
+    height:100vh;overflow-y:auto;border-right:1px solid var(--line);
+    padding:20px 12px 24px;background:var(--panel);
+  }
+  .sidebar-brand{display:flex;align-items:center;gap:10px;padding:2px 6px 18px;}
+  .sidebar-brand .brand-mark{width:36px;height:36px;font-size:16px;cursor:pointer;user-select:none;transition:transform .15s ease;}
+  .sidebar-brand .brand-mark:hover{transform:scale(1.06);}
+  .sidebar-brand h1{font-family:'Space Grotesk';font-weight:700;font-size:15.5px;margin:0;letter-spacing:.2px;line-height:1.25;}
+  .sidebar-brand p{margin:1px 0 0;font-size:11px;color:var(--text-dim);}
+  .toggle-chevron{background:none;border:none;color:var(--text-dim);cursor:pointer;font-size:15px;padding:4px 6px;line-height:1;margin-left:auto;flex:0 0 auto;transition:transform .15s ease;}
+  .toggle-chevron:hover{color:var(--text);}
+  .sidebar.collapsed .toggle-chevron{transform:rotate(180deg);}
+  .sidebar-nav{display:flex;flex-direction:column;gap:2px;border-bottom:none;overflow:visible;}
+  .sidebar-nav .tab{
+    font-family:'Space Grotesk';font-weight:600;font-size:13.5px;text-align:left;
+    background:none;border:none;color:var(--text-dim);padding:10px 12px;cursor:pointer;
+    border-radius:8px;border-bottom:none;border-left:3px solid transparent;display:flex;align-items:center;gap:10px;
+    white-space:nowrap;width:100%;
+  }
+  .sidebar-nav .tab .nav-icon{font-size:15px;line-height:1;width:18px;text-align:center;flex:0 0 auto;}
+  .sidebar-nav .tab:hover{color:var(--text);background:var(--panel-2);}
+  .sidebar-nav .tab.active{color:var(--text);background:var(--panel-2);border-left-color:var(--brass);}
+  .sidebar-foot{margin-top:16px;padding-top:14px;border-top:1px solid var(--line);}
+
+  /* sidebar collapsed (disembunyikan lewat klik logo) */
+  .sidebar.collapsed{width:76px;flex:0 0 76px;padding-left:8px;padding-right:8px;}
+  .sidebar.collapsed .sidebar-brand{justify-content:center;padding:2px 0 18px;}
+  .sidebar.collapsed .sidebar-brand h1,
+  .sidebar.collapsed .sidebar-brand p{display:none;}
+  .sidebar.collapsed .sidebar-nav .tab{justify-content:center;padding:10px 6px;gap:0;}
+  .sidebar.collapsed .sidebar-nav .tab .nav-label{display:none;}
+  .sidebar.collapsed .sidebar-foot{display:flex;flex-direction:column;align-items:center;}
+  .sidebar.collapsed .sidebar-foot .status-pill{padding:5px;border-radius:50%;}
+  .sidebar.collapsed .sidebar-foot .status-pill span:not(.status-dot){display:none;}
+  .sidebar.collapsed .sidebar-foot #logoutBtn{width:auto;padding:8px 10px;}
+  .sidebar.collapsed .sidebar-foot #logoutBtn .logout-label{display:none;}
+
+  .main-content{flex:1 1 auto;min-width:0;padding:20px 24px 60px;}
+
+  @media (max-width:860px){
+    .app{flex-direction:column;align-items:stretch;}
+    .sidebar{
+      width:100%;flex:none;align-self:stretch;position:sticky;top:0;height:auto;max-height:none;
+      border-right:none;border-bottom:1px solid var(--line);
+      padding:8px 10px;z-index:30;
+      display:flex;flex-direction:column;align-items:stretch;gap:0;
+      box-sizing:border-box;
+    }
+    .sidebar-brand{display:flex;align-items:center;padding:0;flex:none;width:100%;box-sizing:border-box;}
+    .sidebar-brand h1,.sidebar-brand p{display:none;}
+    .sidebar-brand .brand-mark{width:32px;height:32px;font-size:13px;flex:0 0 auto;cursor:pointer;}
+    /* Menu disembunyikan secara default di HP; muncul sebagai daftar ke bawah
+       (bukan strip mendatar) saat logo/panah diklik - lihat .sidebar.collapsed di bawah. */
+    .sidebar-nav{display:none;flex-direction:column;gap:2px;width:100%;padding-top:8px;margin-top:8px;border-top:1px solid var(--line);overflow-x:visible;}
+    .sidebar-nav .tab{border-left:3px solid transparent;border-bottom:none;justify-content:flex-start;flex:none;width:100%;padding:10px 8px;box-sizing:border-box;}
+    .sidebar-nav .tab.active{border-left-color:var(--brass);background:var(--panel-2);}
+    .sidebar-foot{display:none !important;}
+    .main-content{padding:16px 14px 60px;}
+    .sidebar.collapsed{width:100%;flex:none;}
+    .sidebar.collapsed .sidebar-nav{display:flex !important;}
+    .sidebar.collapsed .sidebar-nav .tab{justify-content:flex-start;padding:10px 8px;gap:10px;}
+    .sidebar.collapsed .sidebar-nav .tab .nav-label{display:inline;}
+    .sidebar.collapsed .sidebar-foot{display:none !important;}
+  }
 
   /* header */
   .topbar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap;}
@@ -114,7 +181,7 @@
   h2.section-title{font-family:'Space Grotesk';font-size:15px;margin:0 0 12px;color:var(--text);}
   .hint{font-size:12px;color:var(--text-dim);margin-top:2px;}
   .panel-head-row{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;flex-wrap:wrap;}
-  .io-actions{display:flex;gap:8px;}
+  .io-actions{display:flex;gap:8px;flex-wrap:wrap;}
 
   /* stock cards - signature element (kartu stok gudang) */
   .stock-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;}
@@ -134,6 +201,23 @@
   .stock-card .stok-val{font-family:'IBM Plex Mono';font-size:22px;font-weight:600;}
   .stock-card .stok-unit{font-size:11px;color:var(--ink-dim);}
   .stock-card .stock-actions{margin-top:10px;display:flex;justify-content:flex-end;gap:6px;}
+
+  /* diagram mingguan masuk/keluar di dashboard */
+  .week-chart-legend{display:flex;gap:18px;margin-bottom:16px;font-size:12.5px;color:var(--text-dim);flex-wrap:wrap;}
+  .week-chart-legend span{display:inline-flex;align-items:center;gap:6px;}
+  .week-chart-legend i{width:10px;height:10px;border-radius:3px;display:inline-block;}
+  .week-chart-legend i.masuk{background:var(--masuk);}
+  .week-chart-legend i.keluar{background:var(--keluar);}
+  .week-chart{display:flex;align-items:flex-end;gap:8px;padding-top:22px;overflow-x:auto;}
+  .week-chart-day{flex:1 1 0;min-width:52px;display:flex;flex-direction:column;align-items:center;}
+  .week-chart-bars{display:flex;align-items:flex-end;gap:4px;height:150px;}
+  .week-chart-bar{width:16px;border-radius:4px 4px 0 0;position:relative;transition:height .25s ease;}
+  .week-chart-bar.masuk{background:var(--masuk);}
+  .week-chart-bar.keluar{background:var(--keluar);}
+  .week-chart-bar .val{position:absolute;top:-18px;left:50%;transform:translateX(-50%);font-size:10.5px;font-family:'IBM Plex Mono';color:var(--text-dim);white-space:nowrap;}
+  .week-chart-label{margin-top:10px;font-size:11px;color:var(--text-dim);text-align:center;line-height:1.35;}
+  .week-chart-label strong{display:block;color:var(--text);font-size:12.5px;font-family:'Space Grotesk';}
+  .week-chart-empty-note{font-size:12.5px;color:var(--text-dim);margin-top:14px;}
   .stamp{
     position:absolute;right:10px;top:10px;font-family:'Space Grotesk';font-size:9.5px;font-weight:700;
     padding:3px 6px;border-radius:3px;border:1.5px solid var(--keluar);color:var(--keluar);
@@ -226,7 +310,8 @@
   .filter-btn.active.f-safe{background:var(--masuk);color:#0E1A17;}
   .riwayat-toolbar .io-actions{gap:8px;}
   .riwayat-count{font-size:11.5px;color:var(--text-dim);margin-bottom:10px;}
-  .date-filter-group{display:flex;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:5px 8px;}
+  .date-filter-group{display:flex;flex-wrap:wrap;align-items:center;gap:6px;background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:5px 8px;}
+  .date-filter-group input[type=date]{width:auto;min-width:0;flex:1 1 120px;}
   .date-filter-group span{font-size:11px;color:var(--text-dim);white-space:nowrap;}
   .date-filter-group input[type=date]{padding:5px 7px;font-size:12px;width:132px;}
   .date-filter-group .icon-btn{width:24px;height:24px;flex-shrink:0;}
@@ -236,14 +321,14 @@
 
   /* modal */
   .modal-overlay{position:fixed;inset:0;background:rgba(8,11,15,.65);display:flex;align-items:center;justify-content:center;padding:20px;z-index:50;}
-  .modal-box{width:100%;max-width:400px;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
+  .modal-box{width:100%;max-width:400px;max-height:90vh;overflow-y:auto;background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);padding:22px;}
   .modal-title{font-family:'Space Grotesk';font-size:15px;margin:0 0 8px;}
   .modal-text{font-size:13px;color:var(--text-dim);line-height:1.5;margin:0 0 6px;}
   .modal-actions{display:flex;gap:8px;margin-top:16px;justify-content:flex-end;}
   .modal-actions button{padding:9px 14px;}
 
   /* action icon buttons in tables */
-  .action-btns{display:flex;gap:6px;white-space:nowrap;}
+  .action-btns{display:flex;gap:6px;flex-wrap:wrap;}
   .icon-btn{
     background:var(--panel-2);border:1px solid var(--line);color:var(--text-dim);
     width:28px;height:28px;border-radius:6px;font-size:13px;padding:0;display:inline-flex;align-items:center;justify-content:center;
@@ -335,7 +420,17 @@
 
 <div class="toast-wrap" id="toastWrap"></div>
 
-<div id="loginScreen" class="login-wrap">
+
+<div id="authCheckScreen" class="login-wrap">
+  <div class="login-card" style="text-align:center;">
+    <div class="brand" style="justify-content:center;">
+      <div class="brand-mark">AGF</div>
+    </div>
+    <p class="login-note" style="margin-top:14px;">Memeriksa sesi login...</p>
+  </div>
+</div>
+
+<div id="loginScreen" class="login-wrap" style="display:none;">
   <div class="login-card">
     <div class="brand">
       <div class="brand-mark">AGF</div>
@@ -391,33 +486,44 @@
 
 <div class="app" id="appRoot" style="display:none;">
 
+  <nav class="sidebar" id="sidebarNav">
+    <div class="sidebar-brand">
+      <div class="brand-mark" onclick="toggleSidebar()" title="Sembunyikan/tampilkan menu">AGF</div>
+      <div>
+        <h1>Gudang Ledger</h1>
+        <p>Amora Global Foods</p>
+      </div>
+      <button class="toggle-chevron" onclick="toggleSidebar()" title="Sembunyikan/tampilkan menu" aria-label="Sembunyikan/tampilkan menu">‹</button>
+    </div>
+    <div class="sidebar-nav">
+      <button class="tab active" data-tab="dashboard"><span class="nav-icon">🏠</span><span class="nav-label">Dashboard</span></button>
+      <button class="tab" data-tab="barang"><span class="nav-icon">📦</span><span class="nav-label">Barang</span></button>
+      <button class="tab" data-tab="transaksi"><span class="nav-icon">📝</span><span class="nav-label">Catat Transaksi</span></button>
+      <button class="tab" data-tab="riwayat"><span class="nav-icon">🕘</span><span class="nav-label">Riwayat</span></button>
+      <button class="tab" data-tab="exp"><span class="nav-icon">⏳</span><span class="nav-label">Exp. Produk</span></button>
+      <button class="tab" data-tab="rusak"><span class="nav-icon">⚠️</span><span class="nav-label">Barang Rusak</span></button>
+      <button class="tab" data-tab="opname"><span class="nav-icon">📋</span><span class="nav-label">Laporan Stok Opname</span></button>
+      <button class="tab" data-tab="kelola-user" id="tabKelolaUser" style="display:none;"><span class="nav-icon">👤</span><span class="nav-label">Kelola User</span></button>
+    </div>
+    <div class="sidebar-foot">
+      <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">Mode lokal</span></div>
+      <button id="logoutBtn" class="btn-ghost btn-sm" style="display:none;margin-top:8px;width:100%;" onclick="doLogout()"><span class="logout-label">Keluar</span></button>
+    </div>
+  </nav>
+
+  <div class="main-content">
 
   <div class="topbar">
     <div class="brand">
-      <div class="brand-mark">AGF</div>
       <div>
-        <h1>Gudang Amora Global Foods</h1>
+        <h1>Gudang Ledger</h1>
         <p>Pencatatan barang keluar &amp; masuk</p>
       </div>
-    </div>
-    <div style="display:flex;align-items:center;">
-      <div id="statusPill" class="status-pill"><span class="status-dot"></span><span id="statusText">Mode lokal</span></div>
-      <button id="logoutBtn" class="btn-ghost btn-sm" style="display:none;" onclick="doLogout()">Keluar</button>
     </div>
   </div>
 
   <div id="banner" class="banner" style="display:none;">
     <span>Belum terhubung ke Firebase - data disimpan sementara di perangkat ini saja.</span>
-  </div>
-
-  <div class="tabs">
-    <button class="tab active" data-tab="dashboard">Dashboard</button>
-    <button class="tab" data-tab="barang">Barang</button>
-    <button class="tab" data-tab="transaksi">Catat Transaksi</button>
-    <button class="tab" data-tab="riwayat">Riwayat</button>
-    <button class="tab" data-tab="exp">Exp. Produk</button>
-    <button class="tab" data-tab="rusak">Barang Rusak</button>
-    <button class="tab" data-tab="kelola-user" id="tabKelolaUser" style="display:none;">Kelola User</button>
   </div>
 
   <!-- DASHBOARD -->
@@ -428,54 +534,30 @@
       <div class="stat keluar"><div class="label">Keluar Hari Ini</div><div class="value" id="statKeluarHariIni">0</div><div class="sub">unit</div></div>
     </div>
     <div class="panel">
-      <h2 class="section-title">Transaksi terbaru</h2>
+      <h2 class="section-title">Barang masuk &amp; keluar - 7 hari terakhir</h2>
       <div id="dashRiwayat"></div>
     </div>
   </div>
 
   <!-- BARANG -->
   <div class="view" id="view-barang">
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-head-row">
-          <h2 class="section-title" style="margin:0;">Kartu stok</h2>
-          <div class="io-actions">
-            <input type="file" id="importFile" accept=".csv" style="display:none;" onchange="handleImportFile(event)">
-            <button class="btn-ghost btn-sm" onclick="$('importFile').click()">⬆ Impor CSV</button>
-            <button class="btn-ghost btn-sm" onclick="eksporBarangCSV()">⬇ Ekspor CSV</button>
-          </div>
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Kartu stok</h2>
+        <div class="io-actions">
+          <input type="file" id="importFile" accept=".csv" style="display:none;" onchange="handleImportFile(event)">
+          <button class="btn-ghost btn-sm" onclick="$('importFile').click()">⬆ Impor CSV</button>
+          <button class="btn-ghost btn-sm" onclick="eksporBarangCSV()">⬇ Ekspor CSV</button>
+          <button class="btn-primary btn-sm" onclick="bukaFormTambahBarang()">+ Tambah Barang</button>
         </div>
-        <p class="field-help" style="margin-bottom:12px;">Format CSV: kolom <span class="mono">kode, nama, satuan, stok, tglExp</span> - baris pertama header. Kolom <span class="mono">tglExp</span> opsional (format YYYY-MM-DD). Kode yang sudah ada akan diperbarui, kode baru akan ditambahkan.</p>
-        <div id="msgImpor" class="msg"></div>
-        <div class="riwayat-search" style="margin-bottom:12px;">
-          <input type="text" id="stokSearch" placeholder="Cari kode atau nama barang..." oninput="onStokSearch(event)">
-        </div>
-        <div class="riwayat-count" id="stokCount"></div>
-        <div class="stock-grid" id="stockGrid"></div>
       </div>
-      <div class="panel">
-        <h2 class="section-title">Tambah barang baru</h2>
-        <label>Kode barang</label>
-        <input type="text" id="fKode" placeholder="mis. BRG-001">
-        <label>Nama barang</label>
-        <input type="text" id="fNama" placeholder="mis. Kabel HDMI 2m">
-        <div class="row">
-          <div>
-            <label>Satuan</label>
-            <input type="text" id="fSatuan" placeholder="pcs / dus / kg">
-          </div>
-          <div>
-            <label>Stok awal</label>
-            <input type="number" id="fStokAwal" value="0" min="0">
-          </div>
-        </div>
-        <label>Tanggal Kadaluarsa (opsional)</label>
-        <input type="date" id="fTglExp">
-        <div style="margin-top:14px;">
-          <button class="btn-primary" onclick="tambahBarang()">Simpan barang</button>
-        </div>
-        <div id="msgBarang" class="msg"></div>
+      <p class="field-help" style="margin-bottom:12px;">Format CSV: kolom <span class="mono">kode, nama, satuan, stok, minStok, tglExp</span> - baris pertama header. Kolom <span class="mono">minStok</span> dan <span class="mono">tglExp</span> opsional (minStok default 5 kalau kosong, tglExp format YYYY-MM-DD). Kode yang sudah ada akan diperbarui, kode baru akan ditambahkan.</p>
+      <div id="msgImpor" class="msg"></div>
+      <div class="riwayat-search" style="margin-bottom:12px;">
+        <input type="text" id="stokSearch" placeholder="Cari kode atau nama barang..." oninput="onStokSearch(event)">
       </div>
+      <div class="riwayat-count" id="stokCount"></div>
+      <div id="stockGrid"></div>
     </div>
   </div>
 
@@ -585,53 +667,50 @@
       <div class="stat keluar"><div class="label">Rusak Bulan Ini</div><div class="value" id="statRusakBulanIni">0</div><div class="sub">unit</div></div>
       <div class="stat keluar"><div class="label">Total Unit Rusak</div><div class="value" id="statRusakTotal">0</div><div class="sub">unit sepanjang waktu</div></div>
     </div>
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-head-row">
-          <h2 class="section-title" style="margin:0;">Riwayat barang rusak</h2>
-          <div class="io-actions">
-            <button class="btn-ghost btn-sm" onclick="eksporRusakCSV()">⬇ Ekspor CSV</button>
-          </div>
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Riwayat barang rusak</h2>
+        <div class="io-actions">
+          <button class="btn-ghost btn-sm" onclick="eksporRusakCSV()">⬇ Ekspor CSV</button>
+          <button class="btn-primary btn-sm" onclick="bukaFormRusak()">+ Catat Barang Rusak</button>
         </div>
-        <div class="riwayat-toolbar">
-          <div class="riwayat-search">
-            <input type="text" id="rusakSearch" placeholder="Cari kode, nama, atau keterangan..." oninput="onRusakSearch(event)">
-          </div>
-        </div>
-        <div class="riwayat-count" id="rusakCount"></div>
-        <div id="rusakTable"></div>
       </div>
-      <div class="panel">
-        <h2 class="section-title">Catat barang rusak</h2>
-        <label>Pilih barang</label>
-        <div class="searchable-select" id="rusakBarangSearchWrap">
-          <input type="text" id="fRusakBarangSearch" placeholder="Ketik kode atau nama barang..." autocomplete="off" oninput="onRusakBarangSearchInput(event)" onfocus="onRusakBarangSearchFocus()" onkeydown="onRusakBarangSearchKeydown(event)">
-          <input type="hidden" id="fRusakBarangSelect">
-          <div class="searchable-select-list" id="rusakBarangSearchList"></div>
+      <div class="riwayat-toolbar">
+        <div class="riwayat-search">
+          <input type="text" id="rusakSearch" placeholder="Cari kode, nama, atau keterangan..." oninput="onRusakSearch(event)">
         </div>
-        <div class="row">
-          <div>
-            <label>Jumlah rusak</label>
-            <input type="number" id="fRusakJumlah" min="1" value="1">
-          </div>
-          <div>
-            <label>Tanggal</label>
-            <input type="date" id="fRusakTanggal" lang="id-ID">
-          </div>
-        </div>
-        <label>Keterangan / alasan rusak (opsional)</label>
-        <textarea id="fRusakKeterangan" rows="2" placeholder="mis. kemasan penyok, basah kena air, jatuh saat bongkar"></textarea>
-        <div style="margin-top:14px;">
-          <button id="btnSimpanRusak" class="btn-keluar" onclick="simpanRusak()">Simpan barang rusak</button>
-        </div>
-        <div id="msgRusak" class="msg"></div>
       </div>
+      <div class="riwayat-count" id="rusakCount"></div>
+      <div id="rusakTable"></div>
+    </div>
+  </div>
+
+  <!-- LAPORAN STOK OPNAME -->
+  <div class="view" id="view-opname">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat"><div class="label">Barang Dicek</div><div class="value" id="statOpnameDicek">0</div><div class="sub">dari <span id="statOpnameTotal">0</span> jenis barang</div></div>
+      <div class="stat masuk"><div class="label">Stok Cocok</div><div class="value" id="statOpnameCocok">0</div><div class="sub">sesuai catatan sistem</div></div>
+      <div class="stat keluar"><div class="label">Ada Selisih</div><div class="value" id="statOpnameSelisih">0</div><div class="sub">perlu ditinjau</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Laporan stok opname</h2>
+        <div class="io-actions">
+          <button class="btn-ghost btn-sm" onclick="resetOpname()">↺ Reset</button>
+          <button class="btn-ghost btn-sm" onclick="eksporOpnameCSV()">⬇ Ekspor CSV</button>
+        </div>
+      </div>
+      <p class="field-help" style="margin-bottom:12px;">Isi kolom <strong>Stok Fisik</strong> dengan hasil hitung manual di gudang. Kolom <strong>Selisih</strong> terisi otomatis (Stok Fisik - Stok Sistem). Isian di sini sementara (tidak mengubah stok sistem) dan akan kosong lagi kalau halaman di-refresh - ekspor ke CSV kalau mau disimpan.</p>
+      <div class="riwayat-search" style="margin-bottom:12px;">
+        <input type="text" id="opnameSearch" placeholder="Cari kode atau nama barang..." oninput="onOpnameSearch(event)">
+      </div>
+      <div id="opnameTable"></div>
     </div>
   </div>
 
   <!-- KELOLA USER -->
   <div class="view" id="view-kelola-user">
-    <div class="panel" style="max-width:640px;">
+    <div class="panel">
       <h2 class="section-title">Kelola pengguna</h2>
       <p class="hint">Hanya admin yang bisa melihat halaman ini. Daftar di bawah hanya menampilkan pengguna yang sudah pernah login/daftar ke aplikasi setidaknya sekali - pengguna pertama yang mendaftar otomatis menjadi admin dan aktif. Pengguna baru lainnya otomatis <strong>Belum Aktif</strong> dan tidak bisa melihat atau mengisi data sampai diaktifkan lewat tombol Aktifkan di bawah.</p>
       <div id="msgUsers" class="msg"></div>
@@ -639,6 +718,7 @@
     </div>
   </div>
 
+  </div>
 
 </div>
 
@@ -759,7 +839,21 @@ document.querySelectorAll('.tab').forEach(btn=>{
 });
 window.goTo = function(tab){
   document.querySelectorAll('.tab').forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
-  document.querySelectorAll('.view').forEach(v=>v.classList.toggle('active', v.id==='view-'+tab));
+  document.querySelectorAll('.view').forEach(v=>{
+    const match = v.id==='view-'+tab;
+    v.classList.toggle('active', match);
+    v.style.display = match ? 'block' : 'none';
+  });
+  // Di HP, menu tampil sebagai daftar dropdown - tutup lagi otomatis setelah memilih menu.
+  if(window.innerWidth <= 860){
+    const sb = document.getElementById('sidebarNav');
+    if(sb) sb.classList.remove('collapsed');
+  }
+};
+
+window.toggleSidebar = function(){
+  const sb = document.getElementById('sidebarNav');
+  if(sb) sb.classList.toggle('collapsed');
 };
 
 window.pilihJenis = function(j){
@@ -903,15 +997,23 @@ async function initFirebase(cfg){
     // supaya listener realtime tetap bisa menjangkau server.
     db.settings({ experimentalForceLongPolling: true, useFetchStreams: false });
     auth = firebase.auth();
+    // Sesi login disimpan hanya untuk tab/sesi browser yang sedang berjalan:
+    // - refresh/reload halaman -> TETAP login (tidak perlu isi ulang)
+    // - tab/browser ditutup lalu dibuka lagi nanti -> harus login ulang
+    try{ await auth.setPersistence(firebase.auth.Auth.Persistence.SESSION); }catch(e){}
 
     $('loginNote').style.display = 'none';
     $('demoCtaBlock').style.display = 'none';
 
+    let authInitDone = false;
+    let pendingLoginTimer = null;
     auth.onAuthStateChanged(async (user)=>{
       if(user && sedangProsesDaftar){
         return; // akun baru saja dibuat - biarkan doRegister() yang mengurus (sign out lalu tampilkan form login)
       }
       if(user){
+        if(pendingLoginTimer){ clearTimeout(pendingLoginTimer); pendingLoginTimer = null; }
+        authInitDone = true;
         fbReady = true;
         isDemo = false;
         setStatus(true);
@@ -941,13 +1043,25 @@ async function initFirebase(cfg){
         rusakList = [];
         usersList = [];
         setStatus(false);
-        showLogin();
+        if(!authInitDone){
+          // Pengecekan pertama kadang sempat melaporkan "belum login" sepersekian
+          // detik sebelum sesi tersimpan (refresh) benar-benar selesai dipulihkan.
+          // Tunda sebentar supaya form login tidak sempat "kedip" muncul kalau
+          // ternyata sesinya valid dan segera menyusul.
+          pendingLoginTimer = setTimeout(()=>{
+            authInitDone = true;
+            showLogin();
+          }, 500);
+        }else{
+          showLogin();
+        }
       }
     });
   }catch(e){
     fbReady = false;
     setStatus(false);
     showToast('err', 'Gagal terhubung', terjemahkanErrorFirebase(e));
+    showLogin();
   }
 }
 
@@ -1057,18 +1171,21 @@ function setStatus(on){
 }
 
 function showApp(){
+  $('authCheckScreen').style.display = 'none';
   $('loginScreen').style.display = 'none';
   $('pendingScreen').style.display = 'none';
-  $('appRoot').style.display = 'block';
+  $('appRoot').style.display = 'flex';
   $('logoutBtn').style.display = fbReady ? 'inline-block' : 'none';
 }
 function showPending(){
+  $('authCheckScreen').style.display = 'none';
   $('loginScreen').style.display = 'none';
   $('appRoot').style.display = 'none';
   $('pendingScreen').style.display = 'flex';
   $('logoutBtn').style.display = 'none';
 }
 function showLogin(){
+  $('authCheckScreen').style.display = 'none';
   $('loginScreen').style.display = 'flex';
   $('pendingScreen').style.display = 'none';
   $('appRoot').style.display = 'none';
@@ -1208,8 +1325,8 @@ function csvEscape(val){
 }
 
 window.eksporBarangCSV = function(){
-  const rows = [['kode','nama','satuan','stok','tglExp']];
-  barangList.forEach(b=> rows.push([b.kode, b.nama, b.satuan||'pcs', b.stok, b.tglExp||'']));
+  const rows = [['kode','nama','satuan','stok','minStok','tglExp']];
+  barangList.forEach(b=> rows.push([b.kode, b.nama, b.satuan||'pcs', b.stok, (b.minStok!=null ? b.minStok : 5), b.tglExp||'']));
   const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1246,13 +1363,14 @@ function parseCSV(text){
   const isHeader = header.includes('kode') && header.includes('nama');
   const dataRows = isHeader ? rows.slice(1) : rows;
   const idx = isHeader
-    ? { kode: header.indexOf('kode'), nama: header.indexOf('nama'), satuan: header.indexOf('satuan'), stok: header.indexOf('stok'), tglExp: header.indexOf('tglexp') }
-    : { kode:0, nama:1, satuan:2, stok:3, tglExp:4 };
+    ? { kode: header.indexOf('kode'), nama: header.indexOf('nama'), satuan: header.indexOf('satuan'), stok: header.indexOf('stok'), minStok: header.indexOf('minstok'), tglExp: header.indexOf('tglexp') }
+    : { kode:0, nama:1, satuan:2, stok:3, minStok:4, tglExp:5 };
   return dataRows.map(r=>({
     kode: (r[idx.kode]||'').trim(),
     nama: (r[idx.nama]||'').trim(),
     satuan: (idx.satuan>-1 ? r[idx.satuan] : '') || 'pcs',
     stok: parseInt(r[idx.stok], 10) || 0,
+    minStok: (idx.minStok>-1 && r[idx.minStok]!=null && r[idx.minStok]!=='') ? (parseInt(r[idx.minStok], 10) || 0) : 5,
     tglExp: (idx.tglExp>-1 ? (r[idx.tglExp]||'') : '').trim()
   })).filter(r=>r.kode && r.nama);
 }
@@ -1276,16 +1394,16 @@ window.handleImportFile = async function(ev){
       const existing = barangList.find(b=>b.kode.toLowerCase()===row.kode.toLowerCase());
       if(existing){
         if(fbReady){
-          await db.collection('barang').doc(existing.id).update({ nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+          await db.collection('barang').doc(existing.id).update({ nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
         }else{
-          existing.nama = row.nama; existing.satuan = row.satuan; existing.stok = row.stok; existing.tglExp = row.tglExp;
+          existing.nama = row.nama; existing.satuan = row.satuan; existing.stok = row.stok; existing.minStok = row.minStok; existing.tglExp = row.tglExp;
         }
         diperbarui++;
       }else{
         if(fbReady){
-          await db.collection('barang').add({ kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+          await db.collection('barang').add({ kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
         }else{
-          barangList.push({ id:'loc_'+Date.now()+'_'+ditambah, kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, tglExp: row.tglExp });
+          barangList.push({ id:'loc_'+Date.now()+'_'+ditambah, kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
         }
         ditambah++;
       }
@@ -1430,11 +1548,41 @@ window.handleImportRiwayatFile = async function(ev){
 };
 
 // ---------- CRUD: BARANG ----------
+window.bukaFormTambahBarang = function(){
+  openModal(`
+    <h3 class="modal-title">Tambah barang baru</h3>
+    <label>Kode barang</label>
+    <input type="text" id="fKode" placeholder="mis. BRG-001">
+    <label>Nama barang</label>
+    <input type="text" id="fNama" placeholder="mis. Kabel HDMI 2m">
+    <div class="row">
+      <div>
+        <label>Satuan</label>
+        <input type="text" id="fSatuan" placeholder="pcs / dus / kg">
+      </div>
+      <div>
+        <label>Stok awal</label>
+        <input type="number" id="fStokAwal" value="0" min="0">
+      </div>
+    </div>
+    <label>Stok minimum (batas "Stok Tipis")</label>
+    <input type="number" id="fStokMin" value="5" min="0">
+    <label>Tanggal Kadaluarsa (opsional)</label>
+    <input type="date" id="fTglExp">
+    <div id="msgBarang" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Tutup</button>
+      <button class="btn-primary" onclick="tambahBarang()">Simpan barang</button>
+    </div>
+  `);
+};
+
 window.tambahBarang = async function(){
   const kode = $('fKode').value.trim();
   const nama = $('fNama').value.trim();
   const satuan = $('fSatuan').value.trim() || 'pcs';
   const stok = parseInt($('fStokAwal').value || '0', 10);
+  const minStok = parseInt($('fStokMin').value || '5', 10);
   const tglExp = $('fTglExp').value || '';
 
   if(!kode || !nama){ showMsg('msgBarang','Kode dan nama barang wajib diisi.', false); return; }
@@ -1442,7 +1590,7 @@ window.tambahBarang = async function(){
     showMsg('msgBarang','Kode barang sudah dipakai.', false); return;
   }
 
-  const item = { kode, nama, satuan, stok, tglExp };
+  const item = { kode, nama, satuan, stok, minStok, tglExp };
   if(fbReady){
     await db.collection('barang').add(item);
   }else{
@@ -1451,7 +1599,7 @@ window.tambahBarang = async function(){
     await saveLocalBarang();
     renderAll();
   }
-  $('fKode').value=''; $('fNama').value=''; $('fSatuan').value=''; $('fStokAwal').value='0'; $('fTglExp').value='';
+  $('fKode').value=''; $('fNama').value=''; $('fSatuan').value=''; $('fStokAwal').value='0'; $('fStokMin').value='5'; $('fTglExp').value='';
   syncToSheets({ sheet:'master', tanggal: todayStr(), kode, nama, satuan, stok, tglExp: tglExp || '' });
   showMsg('msgBarang','Barang tersimpan.', true);
 };
@@ -1470,6 +1618,8 @@ window.editBarangPrompt = function(id){
       <div><label>Satuan</label><input type="text" id="modalBarangSatuan" value="${escapeHtml(b.satuan||'pcs')}"></div>
       <div><label>Stok</label><input type="number" id="modalBarangStok" min="0" value="${b.stok}"></div>
     </div>
+    <label>Stok minimum (batas "Stok Tipis")</label>
+    <input type="number" id="modalBarangStokMin" min="0" value="${b.minStok!=null ? b.minStok : 5}">
     <p class="field-help">Tanggal kadaluarsa diatur lewat menu Exp. Produk.</p>
     <div id="msgModal" class="msg"></div>
     <div class="modal-actions">
@@ -1486,6 +1636,7 @@ window.simpanEditBarang = async function(id){
   const namaBaru = $('modalBarangNama').value.trim();
   const satuanBaru = $('modalBarangSatuan').value.trim() || 'pcs';
   const stokBaru = parseInt($('modalBarangStok').value || '0', 10);
+  const minStokBaru = parseInt($('modalBarangStokMin').value || '5', 10);
 
   if(!kodeBaru || !namaBaru){ showMsg('msgModal','Kode dan nama barang wajib diisi.', false); return; }
   const dupe = barangList.find(x=>x.id!==id && x.kode.toLowerCase()===kodeBaru.toLowerCase());
@@ -1493,10 +1644,10 @@ window.simpanEditBarang = async function(id){
 
   if(fbReady){
     try{
-      await db.collection('barang').doc(id).update({ kode: kodeBaru, nama: namaBaru, satuan: satuanBaru, stok: stokBaru });
+      await db.collection('barang').doc(id).update({ kode: kodeBaru, nama: namaBaru, satuan: satuanBaru, stok: stokBaru, minStok: minStokBaru });
     }catch(e){ showMsg('msgModal', terjemahkanErrorFirebase(e), false); return; }
   }else{
-    b.kode = kodeBaru; b.nama = namaBaru; b.satuan = satuanBaru; b.stok = stokBaru;
+    b.kode = kodeBaru; b.nama = namaBaru; b.satuan = satuanBaru; b.stok = stokBaru; b.minStok = minStokBaru;
     await saveLocalBarang();
     renderAll();
   }
@@ -1805,6 +1956,7 @@ function renderAll(){
   renderRiwayat();
   renderExpProduk();
   renderBarangRusak();
+  renderOpname();
   renderKelolaUser();
   applyRoleUI();
 }
@@ -1816,7 +1968,7 @@ function renderStockGrid(){
 
   if(!barangList.length){
     if(countEl) countEl.textContent = '';
-    el.innerHTML = '<div class="empty">Belum ada barang. Tambahkan di panel sebelah kanan.</div>';
+    el.innerHTML = '<div class="empty">Belum ada barang. Klik tombol "+ Tambah Barang" di atas untuk menambahkan.</div>';
     return;
   }
   if(!barangBisaDiakses.length){
@@ -1834,19 +1986,24 @@ function renderStockGrid(){
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian.</div>'; return; }
 
-  el.innerHTML = list.map(b=>{
-    const low = b.stok <= 5;
-    return `<div class="stock-card">
-      <div class="stamp ${low?'':'ok'}">${low?'STOK TIPIS':'AMAN'}</div>
-      <div class="kode">${escapeHtml(b.kode)}</div>
-      <div class="nama">${escapeHtml(b.nama)}</div>
-      <div class="stok-row"><span class="stok-val">${b.stok}</span><span class="stok-unit">${escapeHtml(b.satuan||'pcs')}</span></div>
-      <div class="stock-actions">
-        <button class="icon-btn" title="Edit barang" onclick="editBarangPrompt('${b.id}')">✎</button>
-        <button class="icon-btn danger" title="Hapus barang" onclick="hapusBarangPrompt('${b.id}')">🗑</button>
-      </div>
-    </div>`;
-  }).join('');
+  el.innerHTML = `<div class="table-scroll"><table><thead><tr>
+    <th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Status</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${list.map(b=>{
+      const minStok = b.minStok!=null ? b.minStok : 5;
+      const low = b.stok <= minStok;
+      return `<tr>
+        <td class="mono">${escapeHtml(b.kode)}</td>
+        <td>${escapeHtml(b.nama)}</td>
+        <td class="mono">${b.stok} ${escapeHtml(b.satuan||'pcs')}</td>
+        <td><span class="tag ${low?'keluar':'masuk'}">${low?'Stok Tipis':'Aman'}</span></td>
+        <td><div class="action-btns">
+          <button class="icon-btn" title="Edit barang" onclick="editBarangPrompt('${b.id}')">✎</button>
+          <button class="icon-btn danger" title="Hapus barang" onclick="hapusBarangPrompt('${b.id}')">🗑</button>
+        </div></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
 }
 
 window.onStokSearch = function(ev){
@@ -1950,10 +2107,60 @@ function renderDashboard(){
   $('statMasukHariIni').textContent = todays.filter(t=>t.jenis==='masuk').reduce((s,t)=>s+t.jumlah,0);
   $('statKeluarHariIni').textContent = todays.filter(t=>t.jenis==='keluar').reduce((s,t)=>s+t.jumlah,0);
 
+  renderTrenMingguan(kodeBisaDiakses);
+}
+
+// Diagram batang barang masuk & keluar untuk 7 hari terakhir (termasuk hari ini) di dashboard.
+function renderTrenMingguan(kodeBisaDiakses){
   const el = $('dashRiwayat');
-  const recent = transaksiList.filter(t=>kodeBisaDiakses.has(t.kodeBarang)).slice(0,6);
-  if(!recent.length){ el.innerHTML = '<div class="empty">Belum ada transaksi.</div>'; return; }
-  el.innerHTML = riwayatTableHtml(recent);
+  const namaHari = ['Min','Sen','Sel','Rab','Kam','Jum','Sab'];
+  const hariList = [];
+  for(let i=6;i>=0;i--){
+    const d = new Date();
+    d.setDate(d.getDate()-i);
+    hariList.push({
+      tanggal: d.toISOString().slice(0,10),
+      label: namaHari[d.getDay()],
+      tglPendek: `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')}`,
+      masuk: 0,
+      keluar: 0
+    });
+  }
+  const peta = {};
+  hariList.forEach(h=>{ peta[h.tanggal] = h; });
+
+  transaksiList.forEach(t=>{
+    if(!kodeBisaDiakses.has(t.kodeBarang)) return;
+    const h = peta[t.tanggal];
+    if(!h) return;
+    if(t.jenis==='masuk') h.masuk += (t.jumlah||0);
+    else if(t.jenis==='keluar') h.keluar += (t.jumlah||0);
+  });
+
+  const maxVal = Math.max(1, ...hariList.map(h=>Math.max(h.masuk, h.keluar)));
+  const totalMasuk = hariList.reduce((s,h)=>s+h.masuk, 0);
+  const totalKeluar = hariList.reduce((s,h)=>s+h.keluar, 0);
+
+  const batang = h => {
+    const tMasuk = h.masuk>0 ? Math.max(4, Math.round((h.masuk/maxVal)*140)) : 2;
+    const tKeluar = h.keluar>0 ? Math.max(4, Math.round((h.keluar/maxVal)*140)) : 2;
+    return `<div class="week-chart-day">
+      <div class="week-chart-bars">
+        <div class="week-chart-bar masuk" style="height:${tMasuk}px;">${h.masuk>0?`<span class="val">${h.masuk}</span>`:''}</div>
+        <div class="week-chart-bar keluar" style="height:${tKeluar}px;">${h.keluar>0?`<span class="val">${h.keluar}</span>`:''}</div>
+      </div>
+      <div class="week-chart-label"><strong>${h.label}</strong>${h.tglPendek}</div>
+    </div>`;
+  };
+
+  el.innerHTML = `
+    <div class="week-chart-legend">
+      <span><i class="masuk"></i>Masuk (total ${totalMasuk} unit)</span>
+      <span><i class="keluar"></i>Keluar (total ${totalKeluar} unit)</span>
+    </div>
+    <div class="week-chart">${hariList.map(batang).join('')}</div>
+    ${(totalMasuk===0 && totalKeluar===0) ? '<div class="week-chart-empty-note">Belum ada transaksi masuk/keluar dalam 7 hari terakhir.</div>' : ''}
+  `;
 }
 
 // true kalau user saat ini boleh melihat riwayat transaksi milik SEMUA orang.
@@ -2359,6 +2566,35 @@ document.addEventListener('click', (ev)=>{
 
 let sedangSimpanRusak = false; // mencegah data dobel kalau tombol simpan barang rusak di-klik berkali-kali
 
+window.bukaFormRusak = function(){
+  openModal(`
+    <h3 class="modal-title">Catat barang rusak</h3>
+    <label>Pilih barang</label>
+    <div class="searchable-select" id="rusakBarangSearchWrap">
+      <input type="text" id="fRusakBarangSearch" placeholder="Ketik kode atau nama barang..." autocomplete="off" oninput="onRusakBarangSearchInput(event)" onfocus="onRusakBarangSearchFocus()" onkeydown="onRusakBarangSearchKeydown(event)">
+      <input type="hidden" id="fRusakBarangSelect">
+      <div class="searchable-select-list" id="rusakBarangSearchList"></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Jumlah rusak</label>
+        <input type="number" id="fRusakJumlah" min="1" value="1">
+      </div>
+      <div>
+        <label>Tanggal</label>
+        <input type="date" id="fRusakTanggal" lang="id-ID" value="${todayStr()}">
+      </div>
+    </div>
+    <label>Keterangan / alasan rusak (opsional)</label>
+    <textarea id="fRusakKeterangan" rows="2" placeholder="mis. kemasan penyok, basah kena air, jatuh saat bongkar"></textarea>
+    <div id="msgRusak" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Tutup</button>
+      <button id="btnSimpanRusak" class="btn-keluar" onclick="simpanRusak()">Simpan barang rusak</button>
+    </div>
+  `);
+};
+
 window.simpanRusak = async function(){
   if(sedangSimpanRusak) return;
 
@@ -2527,6 +2763,119 @@ window.hapusRusak = async function(id){
     renderAll();
   }
   closeModal();
+};
+
+// ---------- LAPORAN STOK OPNAME ----------
+let opnameInput = {};   // { barangId: 'nilai stok fisik yang diketik' }
+let opnameQuery = '';
+
+function opnameRowHtml(b){
+  const nilai = Object.prototype.hasOwnProperty.call(opnameInput, b.id) ? opnameInput[b.id] : '';
+  const adaIsi = nilai !== '' && nilai !== null && !isNaN(parseInt(nilai, 10));
+  const fisik = adaIsi ? parseInt(nilai, 10) : null;
+  const selisih = adaIsi ? (fisik - b.stok) : null;
+  let selisihHtml = '<span style="color:var(--text-dim)">-</span>';
+  if(adaIsi){
+    if(selisih === 0) selisihHtml = `<span class="tag masuk">0 (cocok)</span>`;
+    else selisihHtml = `<span class="tag keluar">${selisih > 0 ? '+' : ''}${selisih}</span>`;
+  }
+  return `<tr data-opname-row="${b.id}">
+    <td class="mono">${escapeHtml(b.kode)}</td>
+    <td>${escapeHtml(b.nama)}</td>
+    <td class="mono">${b.stok} ${escapeHtml(b.satuan||'pcs')}</td>
+    <td><input type="number" min="0" placeholder="isi hasil hitung" value="${adaIsi ? fisik : ''}" style="max-width:120px;" oninput="updateOpnameSelisih('${b.id}', this.value)"></td>
+    <td data-opname-selisih="${b.id}">${selisihHtml}</td>
+  </tr>`;
+}
+
+function renderOpnameStats(barangBisaDiakses){
+  let dicek = 0, cocok = 0, selisih = 0;
+  barangBisaDiakses.forEach(b=>{
+    const nilai = opnameInput[b.id];
+    if(nilai !== undefined && nilai !== '' && !isNaN(parseInt(nilai, 10))){
+      dicek++;
+      const fisik = parseInt(nilai, 10);
+      if(fisik === b.stok) cocok++; else selisih++;
+    }
+  });
+  $('statOpnameTotal').textContent = barangBisaDiakses.length;
+  $('statOpnameDicek').textContent = dicek;
+  $('statOpnameCocok').textContent = cocok;
+  $('statOpnameSelisih').textContent = selisih;
+}
+
+function renderOpname(){
+  const el = $('opnameTable');
+  if(!el) return;
+  const barangBisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+  renderOpnameStats(barangBisaDiakses);
+
+  if(!barangBisaDiakses.length){
+    el.innerHTML = '<div class="empty">Belum ada barang untuk dicek.</div>';
+    return;
+  }
+  const q = opnameQuery.toLowerCase();
+  const list = q
+    ? barangBisaDiakses.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : barangBisaDiakses;
+  if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian.</div>'; return; }
+
+  el.innerHTML = `<div class="table-scroll"><table><thead><tr>
+    <th>Kode</th><th>Nama Barang</th><th>Stok Sistem</th><th>Stok Fisik</th><th>Selisih</th>
+  </tr></thead><tbody>${list.map(opnameRowHtml).join('')}</tbody></table></div>`;
+}
+
+window.updateOpnameSelisih = function(barangId, nilai){
+  opnameInput[barangId] = nilai;
+  const b = barangList.find(x=>x.id===barangId);
+  const cell = document.querySelector(`[data-opname-selisih="${barangId}"]`);
+  if(!b || !cell) return;
+  const adaIsi = nilai !== '' && nilai !== null && !isNaN(parseInt(nilai, 10));
+  if(!adaIsi){
+    cell.innerHTML = '<span style="color:var(--text-dim)">-</span>';
+  }else{
+    const fisik = parseInt(nilai, 10);
+    const selisih = fisik - b.stok;
+    cell.innerHTML = selisih === 0
+      ? `<span class="tag masuk">0 (cocok)</span>`
+      : `<span class="tag keluar">${selisih > 0 ? '+' : ''}${selisih}</span>`;
+  }
+  const barangBisaDiakses = barangList.filter(x => bolehAksesBarang(x.id));
+  renderOpnameStats(barangBisaDiakses);
+};
+
+window.onOpnameSearch = function(ev){
+  opnameQuery = ev.target.value || '';
+  renderOpname();
+};
+
+window.resetOpname = function(){
+  if(!Object.keys(opnameInput).length) return;
+  if(!confirm('Kosongkan semua isian stok fisik yang sudah diketik?')) return;
+  opnameInput = {};
+  renderOpname();
+};
+
+window.eksporOpnameCSV = function(){
+  const barangBisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+  const rows = [['kode','nama','stokSistem','stokFisik','selisih']];
+  barangBisaDiakses.forEach(b=>{
+    const nilai = opnameInput[b.id];
+    const adaIsi = nilai !== undefined && nilai !== '' && !isNaN(parseInt(nilai, 10));
+    const fisik = adaIsi ? parseInt(nilai, 10) : '';
+    const selisih = adaIsi ? (fisik - b.stok) : '';
+    rows.push([b.kode, b.nama, b.stok, fisik, selisih]);
+  });
+  const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'stok-opname-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
 };
 
 // ---------- KELOLA USER ----------
