@@ -237,6 +237,7 @@
   .exp-card .exp-row{display:flex;align-items:center;justify-content:space-between;border-top:1px dashed var(--ink-dim);padding-top:8px;}
   .exp-card .exp-tgl{font-family:'IBM Plex Mono';font-size:13px;}
   .exp-card .exp-tgl.kosong{color:var(--ink-dim);font-style:italic;}
+  td.kosong{color:var(--text-dim);font-style:italic;}
   .exp-card .exp-actions{margin-top:10px;display:flex;justify-content:flex-end;}
   .exp-badge{font-family:'Space Grotesk';font-size:9.5px;font-weight:700;padding:3px 7px;border-radius:3px;letter-spacing:.05em;display:inline-block;}
   .exp-badge.expired{background:var(--keluar-dim);color:var(--keluar);border:1.5px solid var(--keluar);}
@@ -551,7 +552,7 @@
           <button class="btn-primary btn-sm" onclick="bukaFormTambahBarang()">+ Tambah Barang</button>
         </div>
       </div>
-      <p class="field-help" style="margin-bottom:12px;">Format CSV: kolom <span class="mono">kode, nama, satuan, stok, minStok, tglExp</span> - baris pertama header. Kolom <span class="mono">minStok</span> dan <span class="mono">tglExp</span> opsional (minStok default 5 kalau kosong, tglExp format YYYY-MM-DD). Kode yang sudah ada akan diperbarui, kode baru akan ditambahkan.</p>
+      <p class="field-help" style="margin-bottom:12px;">Format CSV: kolom <span class="mono">kode, nama, satuan, stok, minStok, isiKarton, tglExp</span> - baris pertama header. Kolom <span class="mono">minStok</span>, <span class="mono">isiKarton</span>, dan <span class="mono">tglExp</span> opsional (minStok default 5 kalau kosong, tglExp format YYYY-MM-DD). Kode yang sudah ada akan diperbarui, kode baru akan ditambahkan.</p>
       <div id="msgImpor" class="msg"></div>
       <div class="riwayat-search" style="margin-bottom:12px;">
         <input type="text" id="stokSearch" placeholder="Cari kode atau nama barang..." oninput="onStokSearch(event)">
@@ -641,7 +642,7 @@
       <div class="panel-head-row">
         <h2 class="section-title" style="margin:0;">Kadaluarsa produk</h2>
       </div>
-      <p class="field-help" style="margin-bottom:12px;">Atur tanggal kadaluarsa tiap barang lewat tombol ✎ di kartu. Barang tanpa tanggal exp ditandai "Belum Diatur".</p>
+      <p class="field-help" style="margin-bottom:12px;">Atur tanggal kadaluarsa tiap barang lewat tombol ✎ di tabel. Barang tanpa tanggal exp ditandai "Belum Diatur".</p>
 
       <div class="riwayat-toolbar">
         <div class="riwayat-search">
@@ -656,7 +657,7 @@
         </div>
       </div>
       <div class="riwayat-count" id="expCount"></div>
-      <div class="exp-grid" id="expGrid"></div>
+      <div id="expGrid"></div>
     </div>
   </div>
 
@@ -736,7 +737,7 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
-  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+   apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
@@ -1325,8 +1326,8 @@ function csvEscape(val){
 }
 
 window.eksporBarangCSV = function(){
-  const rows = [['kode','nama','satuan','stok','minStok','tglExp']];
-  barangList.forEach(b=> rows.push([b.kode, b.nama, b.satuan||'pcs', b.stok, (b.minStok!=null ? b.minStok : 5), b.tglExp||'']));
+  const rows = [['kode','nama','satuan','stok','minStok','isiKarton','tglExp']];
+  barangList.forEach(b=> rows.push([b.kode, b.nama, b.satuan||'pcs', b.stok, (b.minStok!=null ? b.minStok : 5), (b.isiKarton!=null ? b.isiKarton : ''), b.tglExp||'']));
   const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
   const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
   const url = URL.createObjectURL(blob);
@@ -1363,14 +1364,15 @@ function parseCSV(text){
   const isHeader = header.includes('kode') && header.includes('nama');
   const dataRows = isHeader ? rows.slice(1) : rows;
   const idx = isHeader
-    ? { kode: header.indexOf('kode'), nama: header.indexOf('nama'), satuan: header.indexOf('satuan'), stok: header.indexOf('stok'), minStok: header.indexOf('minstok'), tglExp: header.indexOf('tglexp') }
-    : { kode:0, nama:1, satuan:2, stok:3, minStok:4, tglExp:5 };
+    ? { kode: header.indexOf('kode'), nama: header.indexOf('nama'), satuan: header.indexOf('satuan'), stok: header.indexOf('stok'), minStok: header.indexOf('minstok'), isiKarton: header.indexOf('isikarton'), tglExp: header.indexOf('tglexp') }
+    : { kode:0, nama:1, satuan:2, stok:3, minStok:4, isiKarton:5, tglExp:6 };
   return dataRows.map(r=>({
     kode: (r[idx.kode]||'').trim(),
     nama: (r[idx.nama]||'').trim(),
     satuan: (idx.satuan>-1 ? r[idx.satuan] : '') || 'pcs',
     stok: parseInt(r[idx.stok], 10) || 0,
     minStok: (idx.minStok>-1 && r[idx.minStok]!=null && r[idx.minStok]!=='') ? (parseInt(r[idx.minStok], 10) || 0) : 5,
+    isiKarton: (idx.isiKarton>-1 && r[idx.isiKarton]!=null && r[idx.isiKarton]!=='') ? (parseInt(r[idx.isiKarton], 10) || null) : null,
     tglExp: (idx.tglExp>-1 ? (r[idx.tglExp]||'') : '').trim()
   })).filter(r=>r.kode && r.nama);
 }
@@ -1394,16 +1396,16 @@ window.handleImportFile = async function(ev){
       const existing = barangList.find(b=>b.kode.toLowerCase()===row.kode.toLowerCase());
       if(existing){
         if(fbReady){
-          await db.collection('barang').doc(existing.id).update({ nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
+          await db.collection('barang').doc(existing.id).update({ nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, isiKarton: row.isiKarton, tglExp: row.tglExp });
         }else{
-          existing.nama = row.nama; existing.satuan = row.satuan; existing.stok = row.stok; existing.minStok = row.minStok; existing.tglExp = row.tglExp;
+          existing.nama = row.nama; existing.satuan = row.satuan; existing.stok = row.stok; existing.minStok = row.minStok; existing.isiKarton = row.isiKarton; existing.tglExp = row.tglExp;
         }
         diperbarui++;
       }else{
         if(fbReady){
-          await db.collection('barang').add({ kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
+          await db.collection('barang').add({ kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, isiKarton: row.isiKarton, tglExp: row.tglExp });
         }else{
-          barangList.push({ id:'loc_'+Date.now()+'_'+ditambah, kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, tglExp: row.tglExp });
+          barangList.push({ id:'loc_'+Date.now()+'_'+ditambah, kode: row.kode, nama: row.nama, satuan: row.satuan, stok: row.stok, minStok: row.minStok, isiKarton: row.isiKarton, tglExp: row.tglExp });
         }
         ditambah++;
       }
@@ -1561,10 +1563,12 @@ window.bukaFormTambahBarang = function(){
         <input type="text" id="fSatuan" placeholder="pcs / dus / kg">
       </div>
       <div>
-        <label>Stok awal</label>
+        <label>Stok awal (pcs)</label>
         <input type="number" id="fStokAwal" value="0" min="0">
       </div>
     </div>
+    <label>Isi per karton (pcs) - opsional, buat baca sisa karton</label>
+    <input type="number" id="fIsiKarton" placeholder="mis. 24" min="1">
     <label>Stok minimum (batas "Stok Tipis")</label>
     <input type="number" id="fStokMin" value="5" min="0">
     <label>Tanggal Kadaluarsa (opsional)</label>
@@ -1583,6 +1587,8 @@ window.tambahBarang = async function(){
   const satuan = $('fSatuan').value.trim() || 'pcs';
   const stok = parseInt($('fStokAwal').value || '0', 10);
   const minStok = parseInt($('fStokMin').value || '5', 10);
+  const isiKartonRaw = $('fIsiKarton').value;
+  const isiKarton = isiKartonRaw ? parseInt(isiKartonRaw, 10) : null;
   const tglExp = $('fTglExp').value || '';
 
   if(!kode || !nama){ showMsg('msgBarang','Kode dan nama barang wajib diisi.', false); return; }
@@ -1590,7 +1596,7 @@ window.tambahBarang = async function(){
     showMsg('msgBarang','Kode barang sudah dipakai.', false); return;
   }
 
-  const item = { kode, nama, satuan, stok, minStok, tglExp };
+  const item = { kode, nama, satuan, stok, minStok, isiKarton, tglExp };
   if(fbReady){
     await db.collection('barang').add(item);
   }else{
@@ -1599,7 +1605,7 @@ window.tambahBarang = async function(){
     await saveLocalBarang();
     renderAll();
   }
-  $('fKode').value=''; $('fNama').value=''; $('fSatuan').value=''; $('fStokAwal').value='0'; $('fStokMin').value='5'; $('fTglExp').value='';
+  $('fKode').value=''; $('fNama').value=''; $('fSatuan').value=''; $('fStokAwal').value='0'; $('fStokMin').value='5'; $('fIsiKarton').value=''; $('fTglExp').value='';
   syncToSheets({ sheet:'master', tanggal: todayStr(), kode, nama, satuan, stok, tglExp: tglExp || '' });
   showMsg('msgBarang','Barang tersimpan.', true);
 };
@@ -1616,8 +1622,10 @@ window.editBarangPrompt = function(id){
     <input type="text" id="modalBarangNama" value="${escapeHtml(b.nama)}">
     <div class="row">
       <div><label>Satuan</label><input type="text" id="modalBarangSatuan" value="${escapeHtml(b.satuan||'pcs')}"></div>
-      <div><label>Stok</label><input type="number" id="modalBarangStok" min="0" value="${b.stok}"></div>
+      <div><label>Stok (pcs)</label><input type="number" id="modalBarangStok" min="0" value="${b.stok}"></div>
     </div>
+    <label>Isi per karton (pcs) - opsional, buat baca sisa karton</label>
+    <input type="number" id="modalBarangIsiKarton" min="1" placeholder="mis. 24" value="${b.isiKarton!=null ? b.isiKarton : ''}">
     <label>Stok minimum (batas "Stok Tipis")</label>
     <input type="number" id="modalBarangStokMin" min="0" value="${b.minStok!=null ? b.minStok : 5}">
     <p class="field-help">Tanggal kadaluarsa diatur lewat menu Exp. Produk.</p>
@@ -1637,6 +1645,8 @@ window.simpanEditBarang = async function(id){
   const satuanBaru = $('modalBarangSatuan').value.trim() || 'pcs';
   const stokBaru = parseInt($('modalBarangStok').value || '0', 10);
   const minStokBaru = parseInt($('modalBarangStokMin').value || '5', 10);
+  const isiKartonRaw = $('modalBarangIsiKarton').value;
+  const isiKartonBaru = isiKartonRaw ? parseInt(isiKartonRaw, 10) : null;
 
   if(!kodeBaru || !namaBaru){ showMsg('msgModal','Kode dan nama barang wajib diisi.', false); return; }
   const dupe = barangList.find(x=>x.id!==id && x.kode.toLowerCase()===kodeBaru.toLowerCase());
@@ -1644,10 +1654,10 @@ window.simpanEditBarang = async function(id){
 
   if(fbReady){
     try{
-      await db.collection('barang').doc(id).update({ kode: kodeBaru, nama: namaBaru, satuan: satuanBaru, stok: stokBaru, minStok: minStokBaru });
+      await db.collection('barang').doc(id).update({ kode: kodeBaru, nama: namaBaru, satuan: satuanBaru, stok: stokBaru, minStok: minStokBaru, isiKarton: isiKartonBaru });
     }catch(e){ showMsg('msgModal', terjemahkanErrorFirebase(e), false); return; }
   }else{
-    b.kode = kodeBaru; b.nama = namaBaru; b.satuan = satuanBaru; b.stok = stokBaru; b.minStok = minStokBaru;
+    b.kode = kodeBaru; b.nama = namaBaru; b.satuan = satuanBaru; b.stok = stokBaru; b.minStok = minStokBaru; b.isiKarton = isiKartonBaru;
     await saveLocalBarang();
     renderAll();
   }
@@ -1987,15 +1997,17 @@ function renderStockGrid(){
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian.</div>'; return; }
 
   el.innerHTML = `<div class="table-scroll"><table><thead><tr>
-    <th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Status</th><th>Aksi</th>
+    <th>Kode</th><th>Nama Barang</th><th>Stok</th><th>Karton</th><th>Status</th><th>Aksi</th>
   </tr></thead><tbody>
     ${list.map(b=>{
       const minStok = b.minStok!=null ? b.minStok : 5;
       const low = b.stok <= minStok;
+      const kartonHtml = formatKartonSisa(b);
       return `<tr>
         <td class="mono">${escapeHtml(b.kode)}</td>
         <td>${escapeHtml(b.nama)}</td>
         <td class="mono">${b.stok} ${escapeHtml(b.satuan||'pcs')}</td>
+        <td class="mono">${kartonHtml}</td>
         <td><span class="tag ${low?'keluar':'masuk'}">${low?'Stok Tipis':'Aman'}</span></td>
         <td><div class="action-btns">
           <button class="icon-btn" title="Edit barang" onclick="editBarangPrompt('${b.id}')">✎</button>
@@ -2004,6 +2016,15 @@ function renderStockGrid(){
       </tr>`;
     }).join('')}
   </tbody></table></div>`;
+}
+
+// Menghitung sisa karton + pcs dari total stok (pcs), berdasarkan isi per karton yang diatur di data barang.
+function formatKartonSisa(b){
+  const isi = parseInt(b.isiKarton, 10);
+  if(!isi || isi <= 0) return '<span style="color:var(--text-dim)">-</span>';
+  const karton = Math.floor(b.stok / isi);
+  const sisaPcs = b.stok % isi;
+  return `${karton} karton${sisaPcs > 0 ? ' + ' + sisaPcs + ' pcs' : ''}`;
 }
 
 window.onStokSearch = function(ev){
@@ -2394,24 +2415,27 @@ function renderExpProduk(){
   }
   if(!list.length){ el.innerHTML = '<div class="empty">Tidak ada barang yang cocok dengan pencarian/filter.</div>'; return; }
 
-  el.innerHTML = list.map(b=>{
-    const info = getExpStatus(b.tglExp);
-    let keterangan;
-    if(info.status==='none') keterangan = '';
-    else if(info.status==='expired') keterangan = `Lewat ${Math.abs(info.days)} hari`;
-    else keterangan = `${info.days} hari lagi`;
-    return `<div class="exp-card">
-      <div class="exp-badge ${info.status}">${info.label}</div>
-      <div class="kode" style="margin-top:22px;">${escapeHtml(b.kode)}</div>
-      <div class="nama">${escapeHtml(b.nama)}</div>
-      <div class="exp-row">
-        <span class="exp-tgl ${b.tglExp?'':'kosong'}">${b.tglExp ? escapeHtml(b.tglExp) + (keterangan?' - '+keterangan:'') : 'Tanggal belum diatur'}</span>
-      </div>
-      <div class="exp-actions">
-        <button class="icon-btn" title="Atur tanggal kadaluarsa" onclick="editExpPrompt('${b.id}')">✎</button>
-      </div>
-    </div>`;
-  }).join('');
+  el.innerHTML = `<div class="table-scroll"><table><thead><tr>
+    <th>Kode</th><th>Nama Barang</th><th>Tanggal Kadaluarsa</th><th>Status</th><th>Keterangan</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${list.map(b=>{
+      const info = getExpStatus(b.tglExp);
+      let keterangan;
+      if(info.status==='none') keterangan = '-';
+      else if(info.status==='expired') keterangan = `Lewat ${Math.abs(info.days)} hari`;
+      else keterangan = `${info.days} hari lagi`;
+      return `<tr>
+        <td class="mono">${escapeHtml(b.kode)}</td>
+        <td>${escapeHtml(b.nama)}</td>
+        <td class="mono ${b.tglExp?'':'kosong'}">${b.tglExp ? escapeHtml(b.tglExp) : 'Belum diatur'}</td>
+        <td><span class="exp-badge ${info.status}">${info.label}</span></td>
+        <td>${keterangan}</td>
+        <td><div class="action-btns">
+          <button class="icon-btn" title="Atur tanggal kadaluarsa" onclick="editExpPrompt('${b.id}')">✎</button>
+        </div></td>
+      </tr>`;
+    }).join('')}
+  </tbody></table></div>`;
 }
 
 // ---------- BARANG RUSAK ----------
