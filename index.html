@@ -125,7 +125,24 @@
     .sidebar.collapsed .sidebar-nav{display:flex !important;}
     .sidebar.collapsed .sidebar-nav .tab{justify-content:flex-start;padding:10px 8px;gap:10px;}
     .sidebar.collapsed .sidebar-nav .tab .nav-label{display:inline;}
-    .sidebar.collapsed .sidebar-foot{display:none !important;}
+    .sidebar.collapsed .sidebar-foot{
+      display:flex !important;
+      flex-direction:column;
+      align-items:stretch;
+      width:100%;
+      gap:8px;
+      margin-top:8px;
+      padding-top:12px;
+    }
+    .sidebar.collapsed .sidebar-foot .status-pill{
+      border-radius:20px;
+      padding:6px 10px;
+      width:auto;
+      justify-content:flex-start;
+    }
+    .sidebar.collapsed .sidebar-foot .status-pill span:not(.status-dot){display:inline;}
+    .sidebar.collapsed .sidebar-foot #logoutBtn{width:100%;padding:10px;}
+    .sidebar.collapsed .sidebar-foot #logoutBtn .logout-label{display:inline;}
   }
 
   /* header */
@@ -502,8 +519,10 @@
       <button class="tab" data-tab="transaksi"><span class="nav-icon">📝</span><span class="nav-label">Catat Transaksi</span></button>
       <button class="tab" data-tab="riwayat"><span class="nav-icon">🕘</span><span class="nav-label">Riwayat</span></button>
       <button class="tab" data-tab="exp"><span class="nav-icon">⏳</span><span class="nav-label">Exp. Produk</span></button>
+      <button class="tab" data-tab="retur"><span class="nav-icon">↩️</span><span class="nav-label">Retur Barang</span></button>
       <button class="tab" data-tab="rusak"><span class="nav-icon">⚠️</span><span class="nav-label">Barang Rusak</span></button>
       <button class="tab" data-tab="opname"><span class="nav-icon">📋</span><span class="nav-label">Laporan Stok Opname</span></button>
+      <button class="tab" data-tab="profil"><span class="nav-icon">🙍</span><span class="nav-label">Profil</span></button>
       <button class="tab" data-tab="kelola-user" id="tabKelolaUser" style="display:none;"><span class="nav-icon">👤</span><span class="nav-label">Kelola User</span></button>
     </div>
     <div class="sidebar-foot">
@@ -661,6 +680,32 @@
     </div>
   </div>
 
+  <!-- RETUR BARANG -->
+  <div class="view" id="view-retur">
+    <div class="grid-3" style="margin-bottom:16px;">
+      <div class="stat masuk"><div class="label">Kejadian Tercatat</div><div class="value" id="statReturKejadian">0</div><div class="sub">catatan retur</div></div>
+      <div class="stat masuk"><div class="label">Retur Bulan Ini</div><div class="value" id="statReturBulanIni">0</div><div class="sub">unit</div></div>
+      <div class="stat masuk"><div class="label">Total Unit Retur</div><div class="value" id="statReturTotal">0</div><div class="sub">unit sepanjang waktu</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head-row">
+        <h2 class="section-title" style="margin:0;">Riwayat retur barang</h2>
+        <div class="io-actions">
+          <button class="btn-ghost btn-sm" onclick="eksporReturCSV()">⬇ Ekspor CSV</button>
+          <button class="btn-primary btn-sm" onclick="bukaFormRetur()">+ Catat Retur Barang</button>
+        </div>
+      </div>
+      <p class="field-help" style="margin-bottom:12px;">Retur dari pelanggan - barang balik masuk gudang dan stok otomatis bertambah.</p>
+      <div class="riwayat-toolbar">
+        <div class="riwayat-search">
+          <input type="text" id="returSearch" placeholder="Cari kode, nama, atau keterangan..." oninput="onReturSearch(event)">
+        </div>
+      </div>
+      <div class="riwayat-count" id="returCount"></div>
+      <div id="returTable"></div>
+    </div>
+  </div>
+
   <!-- BARANG RUSAK -->
   <div class="view" id="view-rusak">
     <div class="grid-3" style="margin-bottom:16px;">
@@ -709,6 +754,17 @@
     </div>
   </div>
 
+  <!-- PROFIL -->
+  <div class="view" id="view-profil">
+    <div class="panel" style="max-width:520px;">
+      <h2 class="section-title">Profil saya</h2>
+      <div id="profilInfo"></div>
+      <div style="margin-top:18px;border-top:1px solid var(--line);padding-top:16px;">
+        <button class="btn-primary" id="btnUbahPwProfil" onclick="bukaUbahPasswordSendiri()">🔑 Ubah Password</button>
+      </div>
+    </div>
+  </div>
+
   <!-- KELOLA USER -->
   <div class="view" id="view-kelola-user">
     <div class="panel">
@@ -737,13 +793,13 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
-   apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
 };
 
-// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec) supaya SEMUA orang
+// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec file baru ) supaya SEMUA orang
 // yang membuka link aplikasi ini otomatis terhubung ke Google Sheets tanpa perlu
 // mengisi sendiri di menu Pengaturan. Kosongkan ("") jika belum ingin mengunci ke file.
 const GOOGLE_SHEETS_URL_BAWAAN = "https://script.google.com/macros/s/AKfycbxetVIwHCw-dI7mZ4A9ktb4bBXv3XV9P1wtJKT-JTSBZ0R-CV-eZecjJx6sRMSLmnBT/exec";
@@ -752,14 +808,17 @@ let db = null, auth = null, fbReady = false;
 let barangList = [];      // {id, kode, nama, satuan, stok, tglExp}
 let transaksiList = [];   // {id, kodeBarang, namaBarang, jenis, jumlah, stokSetelah, keterangan, tanggal}
 let rusakList = [];       // {id, kodeBarang, namaBarang, jumlah, keterangan, tanggal}
+let returList = [];       // {id, kodeBarang, namaBarang, jumlah, keterangan, tanggal} - retur dari pelanggan (stok bertambah)
 let usersList = [];       // {id(uid), email, role, createdAt}
 let currentUserRole = null; // 'admin' | 'user' | null (belum diketahui / mode lokal)
 let currentUserAktif = null; // true/false/null - null berarti belum diketahui
 let currentUserBarangDiizinkan = []; // array id barang yang boleh diakses user non-admin di Kartu Stok & form input
+let currentUserNama = '';
 let userRoleUnsub = null;
 let barangUnsub = null;
 let transaksiUnsub = null;
 let rusakUnsub = null;
+let returUnsub = null;
 let usersUnsub = null;
 let jenisAktif = 'masuk';
 let sheetsUrl = '';
@@ -776,6 +835,8 @@ let expFilter = 'semua'; // 'semua' | 'expired' | 'soon' | 'safe' | 'none'
 let expQuery = '';
 let rusakQuery = '';
 let rusakBarangSearchHighlight = -1;
+let returQuery = '';
+let returBarangSearchHighlight = -1;
 let sedangProsesDaftar = false; // true selama proses Buat Akun, supaya tidak auto-masuk ke aplikasi
 
 const $ = (id) => document.getElementById(id);
@@ -927,9 +988,11 @@ async function loadLocal(){
   const kunciBarang = isDemo ? 'inv:demo-barang' : 'inv:barang';
   const kunciTransaksi = isDemo ? 'inv:demo-transaksi' : 'inv:transaksi';
   const kunciRusak = isDemo ? 'inv:demo-rusak' : 'inv:rusak';
+  const kunciRetur = isDemo ? 'inv:demo-retur' : 'inv:retur';
   try{ const r = await localStore.get(kunciBarang); barangList = r ? JSON.parse(r.value) : []; }catch(e){ barangList = []; }
   try{ const r = await localStore.get(kunciTransaksi); transaksiList = r ? JSON.parse(r.value) : []; }catch(e){ transaksiList = []; }
   try{ const r = await localStore.get(kunciRusak); rusakList = r ? JSON.parse(r.value) : []; }catch(e){ rusakList = []; }
+  try{ const r = await localStore.get(kunciRetur); returList = r ? JSON.parse(r.value) : []; }catch(e){ returList = []; }
   setStatus(false);
   renderAll();
 }
@@ -944,6 +1007,10 @@ async function saveLocalTransaksi(){
 async function saveLocalRusak(){
   const kunci = isDemo ? 'inv:demo-rusak' : 'inv:rusak';
   await localStore.set(kunci, JSON.stringify(rusakList), false);
+}
+async function saveLocalRetur(){
+  const kunci = isDemo ? 'inv:demo-retur' : 'inv:retur';
+  await localStore.set(kunci, JSON.stringify(returList), false);
 }
 
 // ---------- FIREBASE ----------
@@ -976,6 +1043,7 @@ async function bersihkanFirebaseAktif(){
   if(barangUnsub){ barangUnsub(); barangUnsub = null; }
   if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
   if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+  if(returUnsub){ returUnsub(); returUnsub = null; }
   if(usersUnsub){ usersUnsub(); usersUnsub = null; }
   if(typeof firebase !== 'undefined' && firebase.apps && firebase.apps.length){
     await Promise.all(firebase.apps.map(a => a.delete().catch(()=>{})));
@@ -1038,10 +1106,12 @@ async function initFirebase(cfg){
         if(barangUnsub){ barangUnsub(); barangUnsub = null; }
         if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
         if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+        if(returUnsub){ returUnsub(); returUnsub = null; }
         if(usersUnsub){ usersUnsub(); usersUnsub = null; }
         barangList = [];
         transaksiList = [];
         rusakList = [];
+        returList = [];
         usersList = [];
         setStatus(false);
         if(!authInitDone){
@@ -1070,6 +1140,7 @@ function attachFirestoreListeners(){
   if(barangUnsub){ barangUnsub(); barangUnsub = null; }
   if(transaksiUnsub){ transaksiUnsub(); transaksiUnsub = null; }
   if(rusakUnsub){ rusakUnsub(); rusakUnsub = null; }
+  if(returUnsub){ returUnsub(); returUnsub = null; }
   if(usersUnsub){ usersUnsub(); usersUnsub = null; }
 
   barangUnsub = db.collection('barang').onSnapshot((snap)=>{
@@ -1085,6 +1156,11 @@ function attachFirestoreListeners(){
   rusakUnsub = db.collection('kerusakan').orderBy('createdAt','desc').limit(200).onSnapshot((snap)=>{
     rusakList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
     renderBarangRusak();
+  });
+
+  returUnsub = db.collection('retur').orderBy('createdAt','desc').limit(200).onSnapshot((snap)=>{
+    returList = snap.docs.map(d=>({ id:d.id, ...d.data() }));
+    renderRetur();
   });
 
   usersUnsub = db.collection('users').orderBy('createdAt','desc').onSnapshot((snap)=>{
@@ -1116,6 +1192,7 @@ function attachUserStatusListener(uid){
     currentUserRole = data.role || 'user';
     currentUserAktif = data.aktif !== false; // dokumen lama tanpa field 'aktif' dianggap aktif (kompatibel ke belakang)
     currentUserBarangDiizinkan = Array.isArray(data.barangDiizinkan) ? data.barangDiizinkan : [];
+    currentUserNama = data.nama || '';
     setStatus(true);
     if(currentUserAktif){
       showApp();
@@ -1138,6 +1215,68 @@ function bolehAksesBarang(barangId){
 
 // Menampilkan/menyembunyikan tab Pengaturan & Kelola User sesuai role, dan
 // menendang keluar dari tab tsb kalau ternyata sedang aktif tapi tidak diizinkan.
+function renderProfil(){
+  const el = $('profilInfo');
+  const btnPw = $('btnUbahPwProfil');
+  if(!el) return;
+
+  if(!fbReady || !auth || !auth.currentUser){
+    el.innerHTML = '<div class="empty">Profil hanya tersedia setelah login lewat Firebase (tidak tersedia di mode lokal/demo).</div>';
+    if(btnPw) btnPw.style.display = 'none';
+    return;
+  }
+  if(btnPw) btnPw.style.display = '';
+
+  const email = auth.currentUser.email || '-';
+  const nama = currentUserNama || '-';
+  const role = currentUserRole === 'admin' ? 'Admin' : 'User';
+  const aktif = currentUserAktif !== false;
+
+  el.innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:14px;">
+      <div>
+        <label style="display:block;margin-bottom:4px;">Nama</label>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <div class="mono">${escapeHtml(nama)}</div>
+          <button class="icon-btn" title="Ubah nama" onclick="bukaUbahNama()">✎</button>
+        </div>
+      </div>
+      <div><label style="display:block;margin-bottom:4px;">Email</label><div class="mono">${escapeHtml(email)}</div></div>
+      <div><label style="display:block;margin-bottom:4px;">Role</label><span class="tag ${currentUserRole==='admin'?'masuk':'keluar'}">${role}</span></div>
+      <div><label style="display:block;margin-bottom:4px;">Status</label><span class="tag ${aktif?'masuk':'keluar'}">${aktif?'Aktif':'Belum Aktif'}</span></div>
+    </div>
+  `;
+}
+
+window.bukaUbahNama = function(){
+  openModal(`
+    <h3 class="modal-title">Ubah nama</h3>
+    <label>Nama</label>
+    <input type="text" id="fNamaBaru" value="${escapeHtml(currentUserNama||'')}" placeholder="Nama Anda">
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanUbahNama()">Simpan</button>
+    </div>
+  `);
+};
+
+window.simpanUbahNama = async function(){
+  const namaBaru = $('fNamaBaru').value.trim();
+  if(!namaBaru){ showMsg('msgModal','Nama tidak boleh kosong.', false); return; }
+  const user = auth && auth.currentUser;
+  if(!user){ showMsg('msgModal','Sesi login tidak ditemukan, silakan login ulang.', false); return; }
+  try{
+    await db.collection('users').doc(user.uid).update({ nama: namaBaru });
+    currentUserNama = namaBaru;
+    closeModal();
+    renderProfil();
+    showToast('ok', 'Nama diperbarui', 'Nama profil Anda berhasil disimpan.');
+  }catch(e){
+    showMsg('msgModal', terjemahkanErrorFirebase(e), false);
+  }
+};
+
 function applyRoleUI(){
   const isAdmin = fbReady && currentUserRole === 'admin';
   const bolehKelolaUser = fbReady && isAdmin;
@@ -1149,6 +1288,7 @@ function applyRoleUI(){
   if(activeTab){
     if(activeTab.dataset.tab==='kelola-user' && !bolehKelolaUser) goTo('dashboard');
   }
+  renderProfil();
 }
 
 function setStatus(on){
@@ -1966,6 +2106,7 @@ function renderAll(){
   renderRiwayat();
   renderExpProduk();
   renderBarangRusak();
+  renderRetur();
   renderOpname();
   renderKelolaUser();
   applyRoleUI();
@@ -2789,6 +2930,360 @@ window.hapusRusak = async function(id){
   closeModal();
 };
 
+// ---------- RETUR BARANG (dari pelanggan - stok bertambah) ----------
+function getReturFiltered(){
+  if(!returQuery) return returList;
+  const q = returQuery.toLowerCase();
+  return returList.filter(r=>{
+    const hay = `${r.namaBarang||''} ${r.kodeBarang||''} ${r.keterangan||''}`.toLowerCase();
+    return hay.includes(q);
+  });
+}
+
+window.onReturSearch = function(ev){
+  returQuery = ev.target.value.trim();
+  renderRetur();
+};
+
+window.eksporReturCSV = function(){
+  const list = getReturFiltered();
+  if(!list.length){ showMsg('msgRetur','Tidak ada catatan retur untuk diekspor.', false); return; }
+  const rows = [['tanggal','kode','nama','jumlah','keterangan','user']];
+  list.forEach(r=> rows.push([r.tanggal, r.kodeBarang, r.namaBarang, r.jumlah, r.keterangan||'', r.oleh||'']));
+  const csv = rows.map(r=>r.map(csvEscape).join(',')).join('\n');
+  const blob = new Blob([csv], { type:'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'retur-barang-' + todayStr() + '.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+  showMsg('msgRetur', `Ekspor selesai: ${list.length} catatan.`, true);
+};
+
+function returTableHtml(list){
+  return `<div class="table-scroll"><table><thead><tr>
+    <th>Tanggal</th><th>Barang</th><th>Jumlah Retur</th><th>Keterangan</th><th>User</th><th>Aksi</th>
+  </tr></thead><tbody>
+    ${list.map(r=>`<tr>
+      <td class="mono">${escapeHtml(tampilkanTanggalHari(r.tanggal))}</td>
+      <td>${escapeHtml(r.namaBarang||'')} <span class="mono" style="color:var(--text-dim)">(${escapeHtml(r.kodeBarang||'')})</span></td>
+      <td class="mono">+${r.jumlah}</td>
+      <td>${escapeHtml(r.keterangan||' - ')}</td>
+      <td>${escapeHtml(r.oleh||'-')}</td>
+      <td><div class="action-btns">
+        <button class="icon-btn" title="Edit" onclick="editReturPrompt('${r.id}')">✎</button>
+        <button class="icon-btn danger" title="Hapus" onclick="hapusReturPrompt('${r.id}')">🗑</button>
+      </div></td>
+    </tr>`).join('')}
+  </tbody></table></div>`;
+}
+
+function renderRetur(){
+  const tableEl = $('returTable');
+  const countEl = $('returCount');
+  if(!tableEl) return;
+
+  const today = new Date(todayStr()+'T00:00:00');
+  const bulanIni = returList.filter(r=>{
+    if(!r.tanggal) return false;
+    const d = new Date(r.tanggal+'T00:00:00');
+    return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth();
+  });
+  $('statReturKejadian').textContent = returList.length;
+  $('statReturBulanIni').textContent = bulanIni.reduce((s,r)=>s+(r.jumlah||0),0);
+  $('statReturTotal').textContent = returList.reduce((s,r)=>s+(r.jumlah||0),0);
+
+  if(!returList.length){
+    if(countEl) countEl.textContent = '';
+    tableEl.innerHTML = '<div class="empty">Belum ada catatan retur barang.</div>';
+    return;
+  }
+  const list = getReturFiltered();
+  if(countEl){
+    countEl.textContent = returQuery ? `Menampilkan ${list.length} dari ${returList.length} catatan` : '';
+  }
+  if(!list.length){ tableEl.innerHTML = '<div class="empty">Tidak ada catatan yang cocok dengan pencarian.</div>'; return; }
+  tableEl.innerHTML = returTableHtml(list);
+}
+
+function labelBarangRetur(b){
+  return `${b.kode} - ${b.nama} (stok: ${b.stok})`;
+}
+
+function renderReturBarangSearchList(filterText){
+  const list = $('returBarangSearchList');
+  const q = (filterText||'').trim().toLowerCase();
+  const bisaDiakses = barangList.filter(b => bolehAksesBarang(b.id));
+  const filtered = q
+    ? bisaDiakses.filter(b => `${b.kode||''} ${b.nama||''}`.toLowerCase().includes(q))
+    : bisaDiakses;
+  returBarangSearchHighlight = filtered.length ? 0 : -1;
+  if(!filtered.length){
+    list.innerHTML = bisaDiakses.length
+      ? '<div class="searchable-select-empty">Tidak ada barang yang cocok. Tambahkan dulu di menu Barang.</div>'
+      : '<div class="searchable-select-empty">Belum ada barang yang diizinkan admin untuk Anda. Hubungi admin.</div>';
+  }else{
+    list.innerHTML = filtered.map((b,i)=>`<div class="searchable-select-item${i===0?' hi':''}" data-id="${b.id}" onclick="pilihReturBarangSearch('${b.id}')"><span class="ss-kode">${escapeHtml(b.kode)}</span> - ${escapeHtml(b.nama)} <span style="color:var(--text-dim)">(stok: ${b.stok})</span></div>`).join('');
+  }
+  list.classList.add('show');
+}
+
+window.onReturBarangSearchInput = function(ev){
+  $('fReturBarangSelect').value = '';
+  renderReturBarangSearchList(ev.target.value);
+};
+
+window.onReturBarangSearchFocus = function(){
+  renderReturBarangSearchList($('fReturBarangSearch').value);
+};
+
+window.pilihReturBarangSearch = function(id){
+  const b = barangList.find(x=>x.id===id);
+  if(!b) return;
+  $('fReturBarangSelect').value = id;
+  $('fReturBarangSearch').value = labelBarangRetur(b);
+  $('returBarangSearchList').classList.remove('show');
+};
+
+window.onReturBarangSearchKeydown = function(ev){
+  const list = $('returBarangSearchList');
+  const items = list.querySelectorAll('.searchable-select-item');
+  if(!items.length) return;
+  if(ev.key==='ArrowDown'){
+    ev.preventDefault();
+    returBarangSearchHighlight = Math.min(returBarangSearchHighlight+1, items.length-1);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===returBarangSearchHighlight));
+    items[returBarangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='ArrowUp'){
+    ev.preventDefault();
+    returBarangSearchHighlight = Math.max(returBarangSearchHighlight-1, 0);
+    items.forEach((el,i)=> el.classList.toggle('hi', i===returBarangSearchHighlight));
+    items[returBarangSearchHighlight].scrollIntoView({block:'nearest'});
+  }else if(ev.key==='Enter'){
+    ev.preventDefault();
+    if(returBarangSearchHighlight>=0 && items[returBarangSearchHighlight]){
+      pilihReturBarangSearch(items[returBarangSearchHighlight].dataset.id);
+    }
+  }else if(ev.key==='Escape'){
+    list.classList.remove('show');
+  }
+};
+
+document.addEventListener('click', (ev)=>{
+  const wrap = $('returBarangSearchWrap');
+  const list = $('returBarangSearchList');
+  if(wrap && list && !wrap.contains(ev.target)){
+    list.classList.remove('show');
+  }
+});
+
+let sedangSimpanRetur = false; // mencegah data dobel kalau tombol simpan retur di-klik berkali-kali
+
+window.bukaFormRetur = function(){
+  openModal(`
+    <h3 class="modal-title">Catat retur barang</h3>
+    <label>Pilih barang</label>
+    <div class="searchable-select" id="returBarangSearchWrap">
+      <input type="text" id="fReturBarangSearch" placeholder="Ketik kode atau nama barang..." autocomplete="off" oninput="onReturBarangSearchInput(event)" onfocus="onReturBarangSearchFocus()" onkeydown="onReturBarangSearchKeydown(event)">
+      <input type="hidden" id="fReturBarangSelect">
+      <div class="searchable-select-list" id="returBarangSearchList"></div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Jumlah retur</label>
+        <input type="number" id="fReturJumlah" min="1" value="1">
+      </div>
+      <div>
+        <label>Tanggal</label>
+        <input type="date" id="fReturTanggal" lang="id-ID" value="${todayStr()}">
+      </div>
+    </div>
+    <label>Keterangan / alasan retur (opsional)</label>
+    <textarea id="fReturKeterangan" rows="2" placeholder="mis. barang cacat dikembalikan pelanggan, salah kirim, tidak jadi dipakai"></textarea>
+    <div id="msgRetur" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Tutup</button>
+      <button id="btnSimpanRetur" class="btn-primary" onclick="simpanRetur()">Simpan retur barang</button>
+    </div>
+  `);
+};
+
+window.simpanRetur = async function(){
+  if(sedangSimpanRetur) return;
+
+  const barangId = $('fReturBarangSelect').value;
+  const jumlah = parseInt($('fReturJumlah').value || '0', 10);
+  const tanggal = $('fReturTanggal').value || todayStr();
+  const keterangan = $('fReturKeterangan').value.trim();
+
+  if(!barangId){ showMsg('msgRetur','Pilih barang terlebih dahulu.', false); return; }
+  if(!jumlah || jumlah <= 0){ showMsg('msgRetur','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.id===barangId);
+  if(!barang){ showMsg('msgRetur','Barang tidak ditemukan.', false); return; }
+  if(!bolehAksesBarang(barangId)){ showMsg('msgRetur','Anda tidak memiliki akses ke barang ini. Hubungi admin.', false); return; }
+
+  const stokBaru = barang.stok + jumlah;
+  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal, oleh };
+
+  sedangSimpanRetur = true;
+  const btnSimpanRetur = $('btnSimpanRetur');
+  const teksAsliBtnRetur = btnSimpanRetur.textContent;
+  btnSimpanRetur.disabled = true;
+  btnSimpanRetur.textContent = 'Menyimpan...';
+
+  try{
+    if(fbReady){
+      try{
+        const barangRef = db.collection('barang').doc(barangId);
+        await db.runTransaction(async (tx)=>{
+          const snap = await tx.get(barangRef);
+          if(!snap.exists) throw new Error('Barang sudah tidak ada.');
+          const data = snap.data();
+          const sBaru = data.stok + jumlah;
+          tx.update(barangRef, { stok: sBaru });
+          const rRef = db.collection('retur').doc();
+          tx.set(rRef, { ...catatan, createdAt: firebase.firestore.FieldValue.serverTimestamp() });
+        });
+      }catch(e){
+        showMsg('msgRetur', e.message, false); return;
+      }
+    }else{
+      barang.stok = stokBaru;
+      catatan.id = 'loc_'+Date.now();
+      catatan.createdAt = Date.now();
+      returList.unshift(catatan);
+      await saveLocalBarang();
+      await saveLocalRetur();
+      renderAll();
+    }
+
+    $('fReturBarangSelect').value = '';
+    $('fReturBarangSearch').value = '';
+    $('fReturJumlah').value = 1;
+    $('fReturKeterangan').value = '';
+    showMsg('msgRetur','Retur barang tercatat.', true);
+  }finally{
+    sedangSimpanRetur = false;
+    btnSimpanRetur.disabled = false;
+    btnSimpanRetur.textContent = teksAsliBtnRetur;
+  }
+};
+
+window.editReturPrompt = function(id){
+  const r = returList.find(x=>x.id===id);
+  if(!r) return;
+  openModal(`
+    <h3 class="modal-title">Edit catatan retur barang</h3>
+    <p class="modal-text">${escapeHtml(r.namaBarang)} <span class="mono">(${escapeHtml(r.kodeBarang)})</span></p>
+    <div class="row">
+      <div><label>Jumlah retur</label><input type="number" id="modalReturJumlah" min="1" value="${r.jumlah}"></div>
+      <div><label>Tanggal</label><input type="date" id="modalReturTanggal" lang="id-ID" value="${escapeHtml(r.tanggal)}"></div>
+    </div>
+    <label>Keterangan</label>
+    <textarea id="modalReturKeterangan" rows="2">${escapeHtml(r.keterangan||'')}</textarea>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="simpanEditRetur('${id}')">Simpan perubahan</button>
+    </div>
+  `);
+};
+
+window.simpanEditRetur = async function(id){
+  const r = returList.find(x=>x.id===id);
+  if(!r) return;
+  const jumlahBaru = parseInt($('modalReturJumlah').value || '0', 10);
+  const tanggalBaru = $('modalReturTanggal').value || r.tanggal;
+  const keteranganBaru = $('modalReturKeterangan').value.trim();
+  if(!jumlahBaru || jumlahBaru <= 0){ showMsg('msgModal','Jumlah harus lebih dari 0.', false); return; }
+
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          const reverted = data.stok - r.jumlah; // batalkan dulu retur lama yang tadinya menambah stok
+          const stokBaru = reverted + jumlahBaru;
+          if(stokBaru < 0) throw new Error('Perubahan ini akan membuat stok minus.');
+          tx.update(barangRef, { stok: stokBaru });
+        }
+        tx.update(db.collection('retur').doc(id), {
+          jumlah: jumlahBaru, tanggal: tanggalBaru, keterangan: keteranganBaru
+        });
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){
+      const reverted = barang.stok - r.jumlah;
+      const stokBaru = reverted + jumlahBaru;
+      if(stokBaru < 0){ showMsg('msgModal','Perubahan ini akan membuat stok minus.', false); return; }
+      barang.stok = stokBaru;
+    }
+    r.jumlah = jumlahBaru; r.tanggal = tanggalBaru; r.keterangan = keteranganBaru;
+    await saveLocalBarang();
+    await saveLocalRetur();
+    renderAll();
+  }
+  closeModal();
+};
+
+window.hapusReturPrompt = function(id){
+  const r = returList.find(x=>x.id===id);
+  if(!r) return;
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+  openModal(`
+    <h3 class="modal-title">Hapus catatan retur barang?</h3>
+    <p class="modal-text">Catatan <strong>retur ${r.jumlah} ${escapeHtml(barang?.satuan||'pcs')}</strong> - ${escapeHtml(r.namaBarang)} pada ${escapeHtml(formatTanggalDMY(r.tanggal))} akan dihapus dan stok barang dikurangi kembali. Tindakan ini tidak bisa dibatalkan.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-keluar" onclick="hapusRetur('${id}')">Ya, hapus</button>
+    </div>
+  `);
+};
+
+window.hapusRetur = async function(id){
+  const r = returList.find(x=>x.id===id);
+  if(!r) return;
+  const barang = barangList.find(b=>b.kode===r.kodeBarang);
+
+  if(fbReady){
+    try{
+      await db.runTransaction(async (tx)=>{
+        if(barang){
+          const barangRef = db.collection('barang').doc(barang.id);
+          const snap = await tx.get(barangRef);
+          const data = snap.data();
+          const stokBaru = data.stok - r.jumlah;
+          if(stokBaru < 0) throw new Error('Stok tidak cukup untuk membatalkan retur ini.');
+          tx.update(barangRef, { stok: stokBaru });
+        }
+        tx.delete(db.collection('retur').doc(id));
+      });
+    }catch(e){ showMsg('msgModal', e.message, false); return; }
+  }else{
+    if(barang){
+      const stokBaru = barang.stok - r.jumlah;
+      if(stokBaru < 0){ showMsg('msgModal','Stok tidak cukup untuk membatalkan retur ini.', false); return; }
+      barang.stok = stokBaru;
+    }
+    returList = returList.filter(x=>x.id!==id);
+    await saveLocalBarang();
+    await saveLocalRetur();
+    renderAll();
+  }
+  closeModal();
+};
+
 // ---------- LAPORAN STOK OPNAME ----------
 let opnameInput = {};   // { barangId: 'nilai stok fisik yang diketik' }
 let opnameQuery = '';
@@ -2931,11 +3426,85 @@ function renderKelolaUser(){
           <button class="btn-ghost btn-sm" onclick="toggleUserAktifPrompt('${u.id}','${escapeHtml(u.email||'')}',${aktif})">${aktif?'Nonaktifkan':'Aktifkan'}</button>
           <button class="btn-ghost btn-sm" onclick="toggleUserRolePrompt('${u.id}','${escapeHtml(u.email||'')}','${u.role}')">${u.role==='admin'?'Jadikan User':'Jadikan Admin'}</button>
           ${u.role!=='admin' ? `<button class="btn-ghost btn-sm" onclick="aturAksesBarangPrompt('${u.id}','${escapeHtml(u.email||'')}')">Atur Akses Barang</button>` : ''}
+          ${isSelf
+            ? `<button class="btn-ghost btn-sm" onclick="bukaUbahPasswordSendiri()">🔑 Ubah Password Saya</button>`
+            : `<button class="btn-ghost btn-sm" onclick="resetPasswordUserPrompt('${escapeHtml(u.email||'')}')">🔑 Reset Password</button>`}
         </div></td>
       </tr>`;
     }).join('')}
   </tbody></table></div>`;
 }
+
+window.bukaUbahPasswordSendiri = function(){
+  openModal(`
+    <h3 class="modal-title">Ubah password saya</h3>
+    <p class="modal-text">Masukkan password lama untuk verifikasi, lalu password baru.</p>
+    <label>Password lama</label>
+    <input type="password" id="fPwLama" autocomplete="current-password">
+    <label>Password baru</label>
+    <input type="password" id="fPwBaru" autocomplete="new-password" placeholder="Minimal 6 karakter">
+    <label>Ulangi password baru</label>
+    <input type="password" id="fPwBaruUlang" autocomplete="new-password">
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button id="btnSimpanPw" class="btn-primary" onclick="simpanUbahPasswordSendiri()">Simpan password baru</button>
+    </div>
+  `);
+};
+
+window.simpanUbahPasswordSendiri = async function(){
+  const pwLama = $('fPwLama').value;
+  const pwBaru = $('fPwBaru').value;
+  const pwBaruUlang = $('fPwBaruUlang').value;
+
+  if(!pwLama){ showMsg('msgModal','Masukkan password lama.', false); return; }
+  if(!pwBaru || pwBaru.length < 6){ showMsg('msgModal','Password baru minimal 6 karakter.', false); return; }
+  if(pwBaru !== pwBaruUlang){ showMsg('msgModal','Konfirmasi password baru tidak cocok.', false); return; }
+
+  const user = auth && auth.currentUser;
+  if(!user){ showMsg('msgModal','Sesi login tidak ditemukan, silakan login ulang.', false); return; }
+
+  const btn = $('btnSimpanPw');
+  const teksAsli = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Menyimpan...';
+  try{
+    const cred = firebase.auth.EmailAuthProvider.credential(user.email, pwLama);
+    await user.reauthenticateWithCredential(cred);
+    await user.updatePassword(pwBaru);
+    closeModal();
+    showToast('ok', 'Password diperbarui', 'Password akun Anda berhasil diganti.');
+  }catch(e){
+    showMsg('msgModal', terjemahkanErrorFirebase(e), false);
+  }finally{
+    btn.disabled = false;
+    btn.textContent = teksAsli;
+  }
+};
+
+window.resetPasswordUserPrompt = function(email){
+  if(!email) return;
+  openModal(`
+    <h3 class="modal-title">Reset password pengguna?</h3>
+    <p class="modal-text">Karena aplikasi ini tidak punya server sendiri, admin tidak bisa langsung mengetik password baru untuk orang lain. Yang bisa dilakukan: kirim <strong>email link reset password</strong> ke <span class="mono">${escapeHtml(email)}</span> - pengguna itu lalu klik link di email tersebut untuk membuat password barunya sendiri.</p>
+    <div id="msgModal" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="kirimResetPasswordUser('${escapeHtml(email)}')">Kirim email reset password</button>
+    </div>
+  `);
+};
+
+window.kirimResetPasswordUser = async function(email){
+  try{
+    await auth.sendPasswordResetEmail(email);
+    closeModal();
+    showToast('ok', 'Email terkirim', `Link reset password sudah dikirim ke ${email}.`);
+  }catch(e){
+    showMsg('msgModal', terjemahkanErrorFirebase(e), false);
+  }
+};
 
 window.toggleUserAktifPrompt = function(uid, email, aktifSekarang){
   const aktifBaru = !aktifSekarang;
