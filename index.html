@@ -121,7 +121,7 @@
     .sidebar-nav .tab.active{border-left-color:var(--brass);background:var(--panel-2);}
     .sidebar-foot{display:none !important;}
     .main-content{padding:16px 14px 60px;}
-    .sidebar.collapsed{width:100%;flex:none;}
+    .sidebar.collapsed{width:100%;flex:none;position:static;}
     .sidebar.collapsed .sidebar-nav{display:flex !important;}
     .sidebar.collapsed .sidebar-nav .tab{justify-content:flex-start;padding:10px 8px;gap:10px;}
     .sidebar.collapsed .sidebar-nav .tab .nav-label{display:inline;}
@@ -458,10 +458,6 @@
     </div>
     <h2 id="loginHeading">Masuk ke aplikasi</h2>
     <p class="sub" id="loginSub">Gunakan email &amp; kata sandi tim Anda</p>
-    <div id="nameField" class="field-hidden">
-      <label>Nama lengkap</label>
-      <input type="text" id="loginName" placeholder="mis. Budi Santoso">
-    </div>
     <label>Email</label>
     <input type="text" id="loginEmail" placeholder="nama@perusahaan.com">
     <label>Kata sandi</label>
@@ -470,12 +466,8 @@
       <button type="button" class="password-toggle" id="togglePasswordBtn" onclick="togglePasswordVisibility()" aria-label="Lihat atau sembunyikan kata sandi">👁</button>
     </div>
     <div class="login-actions" id="loginActionsDefault">
-      <button class="btn-ghost" onclick="showRegisterForm()">Daftar</button>
+      <button class="btn-ghost" onclick="bukaFormDaftar()">Daftar</button>
       <button class="btn-primary" onclick="doLogin()">Masuk</button>
-    </div>
-    <div class="login-actions field-hidden" id="loginActionsRegister">
-      <button class="btn-ghost" onclick="showLoginForm()">Batal</button>
-      <button class="btn-primary" onclick="doRegister()">Buat Akun</button>
     </div>
     <div id="msgLogin" class="msg"></div>
     <div class="demo-cta" id="demoCtaBlock">
@@ -793,13 +785,13 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
-  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+   apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
 };
 
-// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec file baru ) supaya SEMUA orang
+// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec / file baru) supaya SEMUA orang
 // yang membuka link aplikasi ini otomatis terhubung ke Google Sheets tanpa perlu
 // mengisi sendiri di menu Pengaturan. Kosongkan ("") jika belum ingin mengunci ke file.
 const GOOGLE_SHEETS_URL_BAWAAN = "https://script.google.com/macros/s/AKfycbxetVIwHCw-dI7mZ4A9ktb4bBXv3XV9P1wtJKT-JTSBZ0R-CV-eZecjJx6sRMSLmnBT/exec";
@@ -954,22 +946,7 @@ window.togglePasswordVisibility = function(){
 };
 
 // ---------- FORM DAFTAR / MASUK ----------
-window.showRegisterForm = function(){
-  $('nameField').classList.remove('field-hidden');
-  $('loginActionsDefault').classList.add('field-hidden');
-  $('loginActionsRegister').classList.remove('field-hidden');
-  $('loginHeading').textContent = 'Buat akun baru';
-  $('loginSub').textContent = 'Isi nama, email, dan kata sandi Anda';
-  $('loginName').focus();
-};
-
 window.showLoginForm = function(){
-  $('nameField').classList.add('field-hidden');
-  $('loginActionsRegister').classList.add('field-hidden');
-  $('loginActionsDefault').classList.remove('field-hidden');
-  $('loginHeading').textContent = 'Masuk ke aplikasi';
-  $('loginSub').textContent = 'Gunakan email & kata sandi tim Anda';
-  $('loginName').value = '';
   $('msgLogin').className = 'msg';
 };
 
@@ -1078,7 +1055,7 @@ async function initFirebase(cfg){
     let pendingLoginTimer = null;
     auth.onAuthStateChanged(async (user)=>{
       if(user && sedangProsesDaftar){
-        return; // akun baru saja dibuat - biarkan doRegister() yang mengurus (sign out lalu tampilkan form login)
+        return; // akun baru saja dibuat - biarkan daftarDariModal() yang mengurus (sign out lalu tampilkan form login)
       }
       if(user){
         if(pendingLoginTimer){ clearTimeout(pendingLoginTimer); pendingLoginTimer = null; }
@@ -1295,7 +1272,7 @@ function setStatus(on){
   const pill = $('statusPill');
   pill.classList.toggle('on', on);
   pill.classList.toggle('demo', isDemo);
-  let teksStatus = isDemo ? 'Mode Demo' : (on ? 'Firebase terhubung' : 'Mode lokal');
+  let teksStatus = isDemo ? 'Mode Demo' : (on ? 'Berhasil' : 'Gagal');
   if(on && !isDemo && currentUserRole){ teksStatus += currentUserRole==='admin' ? ' - Admin' : ' - User'; }
   $('statusText').textContent = teksStatus;
   const banner = $('banner');
@@ -1335,6 +1312,48 @@ function showLogin(){
   $('loginPassword').value = '';
 }
 
+window.bukaFormDaftar = function(){
+  openModal(`
+    <h3 class="modal-title">Buat akun baru</h3>
+    <label>Nama lengkap</label>
+    <input type="text" id="fDaftarNama" placeholder="mis. Budi Santoso">
+    <label>Email</label>
+    <input type="text" id="fDaftarEmail" placeholder="nama@perusahaan.com">
+    <label>Kata sandi</label>
+    <input type="password" id="fDaftarPassword" placeholder="minimal 6 karakter">
+    <div id="msgDaftar" class="msg"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal()">Batal</button>
+      <button class="btn-primary" onclick="daftarDariModal()">Buat Akun</button>
+    </div>
+  `);
+};
+
+window.daftarDariModal = async function(){
+  const nama = $('fDaftarNama').value.trim();
+  const email = $('fDaftarEmail').value.trim();
+  const pass = $('fDaftarPassword').value;
+  if(!auth){ showMsg('msgDaftar','Firebase belum terhubung.', false); return; }
+  if(!nama){ showMsg('msgDaftar','Nama lengkap wajib diisi.', false); return; }
+  if(!email || !pass){ showMsg('msgDaftar','Isi email dan kata sandi.', false); return; }
+  if(pass.length < 6){ showMsg('msgDaftar','Kata sandi minimal 6 karakter.', false); return; }
+  sedangProsesDaftar = true;
+  try{
+    const cred = await auth.createUserWithEmailAndPassword(email, pass);
+    try{ await cred.user.updateProfile({ displayName: nama }); }catch(e){}
+    try{ await ensureUserDoc(cred.user, nama); }catch(e){}
+    await auth.signOut();
+    closeModal();
+    showToast('ok', 'Akun berhasil dibuat', 'Silakan masuk dengan email dan kata sandi Anda.');
+    $('loginEmail').value = email;
+    $('loginPassword').value = '';
+  }catch(e){
+    showMsg('msgDaftar', terjemahkanErrorAuth(e), false);
+  }finally{
+    sedangProsesDaftar = false;
+  }
+};
+
 window.doLogin = async function(){
   const email = $('loginEmail').value.trim();
   const pass = $('loginPassword').value;
@@ -1344,30 +1363,6 @@ window.doLogin = async function(){
     await auth.signInWithEmailAndPassword(email, pass);
   }catch(e){
     showMsg('msgLogin', terjemahkanErrorAuth(e), false);
-  }
-};
-
-window.doRegister = async function(){
-  const nama = $('loginName').value.trim();
-  const email = $('loginEmail').value.trim();
-  const pass = $('loginPassword').value;
-  if(!auth){ showMsg('msgLogin','Firebase belum terhubung.', false); return; }
-  if(!nama){ showMsg('msgLogin','Nama lengkap wajib diisi.', false); return; }
-  if(!email || !pass){ showMsg('msgLogin','Isi email dan kata sandi.', false); return; }
-  if(pass.length < 6){ showMsg('msgLogin','Kata sandi minimal 6 karakter.', false); return; }
-  sedangProsesDaftar = true;
-  try{
-    const cred = await auth.createUserWithEmailAndPassword(email, pass);
-    try{ await cred.user.updateProfile({ displayName: nama }); }catch(e){}
-    try{ await ensureUserDoc(cred.user, nama); }catch(e){}
-    await auth.signOut();
-    showToast('ok', 'Akun berhasil dibuat', 'Silakan masuk dengan email dan kata sandi Anda.');
-    showLoginForm();
-    $('loginPassword').value = '';
-  }catch(e){
-    showMsg('msgLogin', terjemahkanErrorAuth(e), false);
-  }finally{
-    sedangProsesDaftar = false;
   }
 };
 
@@ -1855,7 +1850,7 @@ window.simpanTransaksi = async function(){
   let stokBaru = jenisAktif==='masuk' ? barang.stok + jumlah : barang.stok - jumlah;
   if(stokBaru < 0){ showMsg('msgTransaksi','Stok tidak cukup untuk transaksi keluar ini.', false); return; }
 
-  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const oleh = currentUserNama || (auth && auth.currentUser ? auth.currentUser.email : '') || '';
   const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jenis: jenisAktif, jumlah, stokSetelah: stokBaru, keterangan, tanggal, oleh };
 
   sedangSimpanTransaksi = true;
@@ -2333,7 +2328,7 @@ function bisaLihatSemuaRiwayat(){
 }
 
 function identitasUserSaatIni(){
-  return (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  return currentUserNama || (auth && auth.currentUser ? auth.currentUser.email : '') || '';
 }
 
 function getRiwayatFiltered(){
@@ -2778,7 +2773,7 @@ window.simpanRusak = async function(){
   const stokBaru = barang.stok - jumlah;
   if(stokBaru < 0){ showMsg('msgRusak','Stok tidak cukup - jumlah rusak melebihi stok yang ada.', false); return; }
 
-  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const oleh = currentUserNama || (auth && auth.currentUser ? auth.currentUser.email : '') || '';
   const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal, oleh };
 
   sedangSimpanRusak = true;
@@ -3127,7 +3122,7 @@ window.simpanRetur = async function(){
   if(!bolehAksesBarang(barangId)){ showMsg('msgRetur','Anda tidak memiliki akses ke barang ini. Hubungi admin.', false); return; }
 
   const stokBaru = barang.stok + jumlah;
-  const oleh = (auth && auth.currentUser) ? (auth.currentUser.displayName || auth.currentUser.email || '') : '';
+  const oleh = currentUserNama || (auth && auth.currentUser ? auth.currentUser.email : '') || '';
   const catatan = { kodeBarang: barang.kode, namaBarang: barang.nama, jumlah, keterangan, tanggal, oleh };
 
   sedangSimpanRetur = true;
