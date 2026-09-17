@@ -785,13 +785,13 @@
 // ke halaman login (tanpa perlu menghubungkan Firebase sendiri di perangkat masing-masing).
 // Kosongkan (biarkan apiKey = "") jika belum ingin mengunci konfigurasi ke dalam file.
 const FIREBASE_CONFIG_BAWAAN = {
-   apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
+  apiKey: "AIzaSyD2kZUFQs-2p0pH_6XwJeJxhknnc24L9Pc",
   authDomain: "amoragudangv1.firebaseapp.com",
   projectId: "amoragudangv1",
   appId: "1:602264777615:web:e0eecd3d4ed3e1b72c11fa"
 };
 
-// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec / file baru) supaya SEMUA orang
+// Isi ini dengan URL Web App Google Apps Script (diakhiri /exec file baru) supaya SEMUA orang
 // yang membuka link aplikasi ini otomatis terhubung ke Google Sheets tanpa perlu
 // mengisi sendiri di menu Pengaturan. Kosongkan ("") jika belum ingin mengunci ke file.
 const GOOGLE_SHEETS_URL_BAWAAN = "https://script.google.com/macros/s/AKfycbxetVIwHCw-dI7mZ4A9ktb4bBXv3XV9P1wtJKT-JTSBZ0R-CV-eZecjJx6sRMSLmnBT/exec";
@@ -2575,10 +2575,18 @@ function renderExpProduk(){
 }
 
 // ---------- BARANG RUSAK ----------
+function getRusakBisaDilihat(){
+  const lihatSemua = bisaLihatSemuaRiwayat();
+  if(lihatSemua) return rusakList;
+  const identitas = identitasUserSaatIni();
+  return rusakList.filter(r => r.oleh === identitas);
+}
+
 function getRusakFiltered(){
-  if(!rusakQuery) return rusakList;
+  const sumber = getRusakBisaDilihat();
+  if(!rusakQuery) return sumber;
   const q = rusakQuery.toLowerCase();
-  return rusakList.filter(r=>{
+  return sumber.filter(r=>{
     const hay = `${r.namaBarang||''} ${r.kodeBarang||''} ${r.keterangan||''}`.toLowerCase();
     return hay.includes(q);
   });
@@ -2630,24 +2638,25 @@ function renderBarangRusak(){
   const countEl = $('rusakCount');
   if(!tableEl) return;
 
+  const bisaDilihat = getRusakBisaDilihat();
   const today = new Date(todayStr()+'T00:00:00');
-  const bulanIni = rusakList.filter(r=>{
+  const bulanIni = bisaDilihat.filter(r=>{
     if(!r.tanggal) return false;
     const d = new Date(r.tanggal+'T00:00:00');
     return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth();
   });
-  $('statRusakKejadian').textContent = rusakList.length;
+  $('statRusakKejadian').textContent = bisaDilihat.length;
   $('statRusakBulanIni').textContent = bulanIni.reduce((s,r)=>s+(r.jumlah||0),0);
-  $('statRusakTotal').textContent = rusakList.reduce((s,r)=>s+(r.jumlah||0),0);
+  $('statRusakTotal').textContent = bisaDilihat.reduce((s,r)=>s+(r.jumlah||0),0);
 
-  if(!rusakList.length){
+  if(!bisaDilihat.length){
     if(countEl) countEl.textContent = '';
     tableEl.innerHTML = '<div class="empty">Belum ada catatan barang rusak.</div>';
     return;
   }
   const list = getRusakFiltered();
   if(countEl){
-    countEl.textContent = rusakQuery ? `Menampilkan ${list.length} dari ${rusakList.length} catatan` : '';
+    countEl.textContent = rusakQuery ? `Menampilkan ${list.length} dari ${bisaDilihat.length} catatan` : '';
   }
   if(!list.length){ tableEl.innerHTML = '<div class="empty">Tidak ada catatan yang cocok dengan pencarian.</div>'; return; }
   tableEl.innerHTML = rusakTableHtml(list);
@@ -2926,10 +2935,18 @@ window.hapusRusak = async function(id){
 };
 
 // ---------- RETUR BARANG (dari pelanggan - stok bertambah) ----------
+function getReturBisaDilihat(){
+  const lihatSemua = bisaLihatSemuaRiwayat();
+  if(lihatSemua) return returList;
+  const identitas = identitasUserSaatIni();
+  return returList.filter(r => r.oleh === identitas);
+}
+
 function getReturFiltered(){
-  if(!returQuery) return returList;
+  const sumber = getReturBisaDilihat();
+  if(!returQuery) return sumber;
   const q = returQuery.toLowerCase();
-  return returList.filter(r=>{
+  return sumber.filter(r=>{
     const hay = `${r.namaBarang||''} ${r.kodeBarang||''} ${r.keterangan||''}`.toLowerCase();
     return hay.includes(q);
   });
@@ -2981,24 +2998,25 @@ function renderRetur(){
   const countEl = $('returCount');
   if(!tableEl) return;
 
+  const bisaDilihat = getReturBisaDilihat();
   const today = new Date(todayStr()+'T00:00:00');
-  const bulanIni = returList.filter(r=>{
+  const bulanIni = bisaDilihat.filter(r=>{
     if(!r.tanggal) return false;
     const d = new Date(r.tanggal+'T00:00:00');
     return d.getFullYear()===today.getFullYear() && d.getMonth()===today.getMonth();
   });
-  $('statReturKejadian').textContent = returList.length;
+  $('statReturKejadian').textContent = bisaDilihat.length;
   $('statReturBulanIni').textContent = bulanIni.reduce((s,r)=>s+(r.jumlah||0),0);
-  $('statReturTotal').textContent = returList.reduce((s,r)=>s+(r.jumlah||0),0);
+  $('statReturTotal').textContent = bisaDilihat.reduce((s,r)=>s+(r.jumlah||0),0);
 
-  if(!returList.length){
+  if(!bisaDilihat.length){
     if(countEl) countEl.textContent = '';
     tableEl.innerHTML = '<div class="empty">Belum ada catatan retur barang.</div>';
     return;
   }
   const list = getReturFiltered();
   if(countEl){
-    countEl.textContent = returQuery ? `Menampilkan ${list.length} dari ${returList.length} catatan` : '';
+    countEl.textContent = returQuery ? `Menampilkan ${list.length} dari ${bisaDilihat.length} catatan` : '';
   }
   if(!list.length){ tableEl.innerHTML = '<div class="empty">Tidak ada catatan yang cocok dengan pencarian.</div>'; return; }
   tableEl.innerHTML = returTableHtml(list);
